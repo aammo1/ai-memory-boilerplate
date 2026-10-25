@@ -1,0 +1,25 @@
+---
+name: ai-memory-kit
+description: >-
+  Load and update the user's external 3-file AI memory system ({{MEMORY_DIR}})
+  from any project or folder. Use when the user asks to use ai-memory-kit,
+  check open tasks, save a decision or task, register a new project in PROFILE.md,
+  or run the multi-step workflow in PIPELINE.md.
+---
+
+# AI Memory Kit Skill (`ai-memory-kit`)
+
+This skill connects the current session (from any folder on the machine) to the user's external memory at `{{MEMORY_DIR}}`.
+
+## Step 1 — Load Memory Immediately
+When this skill is invoked, read these files in full before answering or acting:
+1. `{{MEMORY_DIR}}/AGENTS.md` (Core operating and safety rules)
+2. `{{MEMORY_DIR}}/PROFILE.md` (Identity, project paths table, and working preferences)
+3. `{{MEMORY_DIR}}/TODO.md` (Open task queue and recent completed log)
+4. `{{MEMORY_DIR}}/PIPELINE.md` (Reusable multi-step workflow pipeline — works for any project listed in `PROFILE.md`)
+
+## Step 2 — Actions You Can Perform
+- **Run the Workflow Pipeline:** Execute or resume `PIPELINE.md` for any project listed in `PROFILE.md` using its `state.json`.
+- **Onboard a New Project to the Memory & Pipeline:** When the user starts a new project or store, add a new column/entry for it in `{{MEMORY_DIR}}/PROFILE.md` and optionally add the 5-line `External Memory & Workflow` pointer block to that project's local `AGENTS.md` (after confirming per Rule 2).
+- **Orient / Recall:** Answer questions using verified facts from `PROFILE.md`, `TODO.md`, or an item's `state.json`.
+- **Save Tasks / Log Progress:** Update `{{MEMORY_DIR}}/TODO.md` (`## Open Tasks` or `## Recent Log`).

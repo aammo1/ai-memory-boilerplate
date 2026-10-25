@@ -1,0 +1,76 @@
+# Reusable Multi-Step Workflow Pipeline
+
+Read this entire file before starting or resuming any pipeline run.
+This pipeline works for **any project or store** registered in `PROFILE.md`.
+
+## Boot Chain
+1. Read `PROFILE.md` (to resolve the target project's repo path, docs vault, staging folder, and `.env` path) and `TODO.md`.
+2. Read any skill files (`SKILL.md`) referenced in the active step below in full.
+3. Read the target item's `state.json` (if resuming an existing run).
+
+---
+
+## Step 0 — Resume / State Check
+1. Locate the item's folder in the target project's `staging/` OR `uploaded/` directory (from `PROFILE.md`).
+2. If `state.json` exists, validate `project`, `item_dir`, and `spec_note`, then resume at the first `pending` or `blocked` step. Never repeat completed paid API calls or live publications.
+3. **Atomic State Updates:** Hold an exclusive file lock (`flock`) on `<item_dir>/.state.lock` when updating `state.json`, re-read current JSON, and replace atomically via a same-directory temp file.
+
+Example `state.json` structure:
+```json
+{
+  "project": "project-a",
+  "item_name": "ITEM-01",
+  "item_dir": "/path/to/project-a-assets/staging/ITEM-01",
+  "spec_note": "/path/to/project-a-docs/ITEM-01.md",
+  "approved_for_live": false,
+  "assets": {},
+  "steps": {
+    "1_plan_and_spec": { "status": "completed", "evidence": "/path/to/project-a-docs/ITEM-01.md" },
+    "2_staging_setup": { "status": "completed", "evidence": ["variant-a/", "ads/"] },
+    "3_asset_generation": { "status": "pending", "next": "ask user which slots to generate" },
+    "4_human_review": { "status": "pending", "next": "wait for explicit approval" },
+    "5_live_publish": { "status": "pending", "next": "publish after step 4 approval" },
+    "6_code_and_deploy": { "status": "pending", "next": "implement page/feature and run lint/typecheck/build" }
+  }
+}
+```
+
+---
+
+## Step 1 — Research & Spec Creation
+1. Confirm the target project from `PROFILE.md` and inspect the input material (photos, brief, or feature request).
+2. Create or update the item's spec/plan note inside the target project's Docs/Marketing Vault (from `PROFILE.md`).
+3. Wait for user approval of the plan before moving to Step 2.
+
+---
+
+## Step 2 — Create Staging Folder & `state.json`
+1. Create `<project_assets_folder>/staging/<item_name>/` and required subfolders.
+2. Initialize `<item_name>/state.json` and add a pointer to it under `## Open Tasks` in `TODO.md`.
+
+---
+
+## Step 3 — Paid API / Asset Generation (Token-Saving Gate)
+**Token / Cost Gate:** Even if the spec defines many prompts or variations (e.g., 4 gallery shots per variant + 6 ad concepts), **always ask the user how many and which specific items to generate** before calling any paid external API (e.g., generating only 2 gallery shots and 2 ads).
+1. Build a batch list containing **only the user-selected slots**.
+2. Execute generation and record each completed output and hash inside `state.json`.
+
+---
+
+## Step 4 — Human Review Gate (Hard Stop)
+Show the user all generated outputs/assets with their file paths. Wait for explicit approval before any live catalog, database, or repository mutation, then set `"approved_for_live": true` in `state.json`.
+
+---
+
+## Step 5 — Live Catalog / Data Publication
+1. Verify `"approved_for_live": true` in `state.json` and confirm the target project's API origin matches `PROFILE.md`.
+2. Run `preview` -> user approval -> `apply`. Save receipt and live URL in `state.json`.
+3. Move the folder from `staging/<item_name>` to `uploaded/<item_name>` and update `item_dir` in `state.json` and `TODO.md`.
+
+---
+
+## Step 6 — Code Implementation & Verification Gate
+1. Open the target project's **Code Repository** (from `PROFILE.md`).
+2. State the proposed code changes in plain language and wait for confirmation (Rule 2).
+3. Implement the changes and run verification checks (`npm run lint`, `npx tsc --noEmit`, `npm run build`, or language-equivalent tests).
+4. After explicit deployment approval, deploy and verify the live URL.

@@ -1,0 +1,31 @@
+# Profile & System Map
+
+## Who I Am
+{{USER_NAME}}. Describe your main role, stack, and active projects or stores here.
+
+## Key Project Paths
+Add each project, store, or service you want the AI to know about:
+
+| Resource | Project A (`project-a`) | Project B (`project-b`) |
+|---|---|---|
+| **Code Repository** | `/path/to/project-a` | `/path/to/project-b` |
+| **Docs / Marketing Vault** | `/path/to/project-a-docs` | `/path/to/project-b-docs` |
+| **Assets / Staging Folder** | `/path/to/project-a-assets` (`staging/` & `uploaded/`) | `/path/to/project-b-assets` (`staging/` & `uploaded/`) |
+| **API / Env Config** | `~/.config/project-a/api.env` | `~/.config/project-b/api.env` |
+| **Live URL** | `https://example-a.com` | `https://example-b.com` |
+
+## Memory Structure (`{{MEMORY_DIR}}`)
+```text
+AGENTS.md      <- Boot instructions for any AI harness opening this folder
+PROFILE.md     <- This file: identity, project paths table, skills, and preferences
+TODO.md        <- Active task queue, workflow pointers, and recent log
+PIPELINE.md    <- Reusable multi-step workflow SOP
+```
+
+## Installed Skills (`~/.agents/skills`)
+- `ai-memory-kit` — loads and updates this memory vault (`PROFILE.md`, `TODO.md`, `PIPELINE.md`) on demand from any folder.
+
+## Preferences for Working with AI
+- **Simple, direct language:** No fluff. Use simple words, keep answers brief, and include a short dummy example when it helps.
+- **Don't settle for half-finished work:** Verify everything before reporting completion.
+- **Push back** when an idea or assumption is wrong.

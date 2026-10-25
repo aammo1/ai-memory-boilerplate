@@ -1,0 +1,11 @@
+# Active Priorities & Task Queue
+
+Single queue of open work. Detailed per-item workflow execution status lives in that item's `state.json`.
+
+## Open Tasks
+- [ ] **[project-a] Customize `PROFILE.md`:** Fill in real repository and asset paths in `{{MEMORY_DIR}}/PROFILE.md`.
+- [ ] **[project-a] Customize `PIPELINE.md`:** Adapt the multi-step workflow in `{{MEMORY_DIR}}/PIPELINE.md` to your exact stack or business flow.
+- [ ] **[meta] Off-Device Backup:** Add a remote Git repository (`git remote add origin ...`) to `{{MEMORY_DIR}}` and push.
+
+## Recent Log (Completed)
+- **{{DATE}}:** Initialized 3-file external memory system (`PROFILE.md`, `TODO.md`, `PIPELINE.md` + `AGENTS.md`).

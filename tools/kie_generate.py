@@ -29,7 +29,13 @@ def load_api_key():
     key = os.environ.get("KIE_API_KEY")
     if key:
         return key.strip()
-    for candidate in [Path.home() / ".config/kie/kie.env", Path.home() / ".config/zehri/kie.env"]:
+    config_root = Path.home() / ".config"
+    candidates = [config_root / "kie/kie.env", config_root / "zehri/kie.env"]
+    if config_root.is_dir():
+        for extra in sorted(config_root.glob("*/kie.env")):
+            if extra not in candidates:
+                candidates.append(extra)
+    for candidate in candidates:
         if candidate.exists():
             for line in candidate.read_text().splitlines():
                 if line.strip().startswith("KIE_API_KEY="):

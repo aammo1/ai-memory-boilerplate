@@ -1,11 +1,11 @@
 # Active Priorities & Task Queue
 
-Single queue of open work. Detailed per-product execution status lives in that product's `launch-state.json`.
+Single queue of open work across all stores and projects. Detailed per-product execution status lives in that product's `launch-state.json`.
 
 ## Open Tasks
-- [ ] **[meta] Configure `PROFILE.md`:** Replace placeholder paths in `{{MEMORY_DIR}}/PROFILE.md` with your real store/project directories and add your Hero `01` reference images into `03 - Reference Heroes/`.
-- [ ] **[store-a] Run Pilot Product #1:** Follow `LAUNCH-PIPELINE.md` Steps 0–10 with `launch-state.json` tracking.
+- [ ] **[meta] Configure `PROFILE.md`:** Replace placeholder repo and picture paths in `{{MEMORY_DIR}}/PROFILE.md` with your real directories and drop your Hero `01` reference images into `03 Assets/Reference Heroes/`.
+- [ ] **[{{FIRST_STORE}}] Run Pilot Product #1:** Follow `LAUNCH-PIPELINE.md` Steps 0–10, saving the marketing note in `01 Products/{{FIRST_STORE}}/` and tracking state in `launch-state.json`.
 - [ ] **[meta] Off-Device Backup:** Add a remote Git repository (`git remote add origin ...`) to `{{MEMORY_DIR}}` and push.
 
 ## Recent Log (Completed)
-- **{{DATE}}:** Initialized Git-tracked 3-file memory vault (`PROFILE.md`, `TODO.md`, `LAUNCH-PIPELINE.md` + `AGENTS.md` + `tools/kie_generate.py`).
+- **{{DATE}}:** Initialized unified Git-tracked AI Memory + Obsidian Marketing Vault (`AGENTS.md`, `PROFILE.md`, `TODO.md`, `LAUNCH-PIPELINE.md`, `00 Templates/`, `01 Products/`, `02 Bases/`, `03 Assets/`, and `tools/kie_generate.py`).

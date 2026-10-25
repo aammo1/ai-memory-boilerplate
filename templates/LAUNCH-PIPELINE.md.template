@@ -1,12 +1,12 @@
 # End-to-End Product Launch Pipeline (Steps 0 to 10)
 
 Read this entire file before starting or resuming any product launch.
-This pipeline works for **any store or project** registered in `PROFILE.md`.
+This pipeline works for **any store, brand, or niche** registered in `PROFILE.md` using this single unified vault (`{{MEMORY_DIR}}`).
 
 ## Boot Chain
-1. Read `PROFILE.md` (to get the target store's repo path, marketing vault path, pictures folder, Hero `01` reference image, and catalog env) and `TODO.md`.
+1. Read `PROFILE.md` (to get the target store's repo path, `01 Products/<store>/` folder, `02 Bases/<store>_Marketing.base`, pictures folder, Hero `01` reference image in `03 Assets/Reference Heroes/`, and catalog env) and `TODO.md`.
 2. Read the target skill files (`SKILL.md`) named in the active step below in full.
-3. Read the product's marketing note inside the target store's marketing vault and its `launch-state.json`.
+3. Read `00 Templates/Product Template.md`, the product's marketing note inside `01 Products/<store>/<product_name>.md`, and its `launch-state.json`.
 
 ---
 
@@ -17,10 +17,14 @@ This pipeline works for **any store or project** registered in `PROFILE.md`.
 
 ---
 
-## Step 1 & 2 — Reference Photos & Marketing Plan
-1. Confirm target store (from `PROFILE.md`, e.g., `store-a`, `store-b`, or any new store) and locate downloaded supplier/Telegram photos.
-2. Target the store's Obsidian marketing vault path directly (from `PROFILE.md`).
-3. Invoke your marketing skill (or create `01 Products/<product_name>.md` in the target store vault) with the reference photos path and embed full color-agnostic production prompts for both the static ads and the product gallery.
+## Step 1 & 2 — Reference Photos & Marketing Plan (Unified Vault)
+1. Confirm target store/niche (from `PROFILE.md`, e.g., `{{FIRST_STORE}}` or any store folder under `01 Products/<store>/`) and locate downloaded supplier/Telegram photos.
+2. Work directly inside this unified vault (`{{MEMORY_DIR}}`):
+   - **Template:** `{{MEMORY_DIR}}/00 Templates/Product Template.md`
+   - **Product Note Destination:** `{{MEMORY_DIR}}/01 Products/<store>/<product_name>.md`
+   - **Store Base Table:** `{{MEMORY_DIR}}/02 Bases/<store>_Marketing.base` (and master `02 Bases/Products_Marketing.base`)
+   - **Cover Image Folder:** `{{MEMORY_DIR}}/03 Assets/Product images/` (referenced in frontmatter as `cover: "[[03 Assets/Product images/<file>]]"`)
+3. Invoke your marketing skill (e.g. `morocco-cod-marketing`) or create `01 Products/<store>/<product_name>.md` using `00 Templates/Product Template.md` as the schema source, and embed full color-agnostic production prompts for both the static ads and the product gallery.
 
 ---
 
@@ -28,7 +32,7 @@ This pipeline works for **any store or project** registered in `PROFILE.md`.
 1. Using the marketing product name, create the staging folder inside the target store's Product Pictures Folder (from `PROFILE.md`):
    - `<store_pictures_folder>/staging/<product_name>/`
 2. Create one subfolder per color variant (e.g., `noir/`, `marron/`, `blanc/`) + `ads_folder/`.
-3. Initialize `<product_name>/launch-state.json` and link its path in `TODO.md`.
+3. Initialize `<product_name>/launch-state.json` (recording `"store"`, `"marketing_note": "{{MEMORY_DIR}}/01 Products/<store>/<product_name>.md"`, and `"product_dir"`) and link its path in `TODO.md`.
 
 ---
 
@@ -43,14 +47,14 @@ uv run --script "{{MEMORY_DIR}}/tools/kie_generate.py" \
   --out noir/01.png \
   --mode store \
   --prompt "$approved_prompt" \
-  --refs "$product_reference" "{{MEMORY_DIR}}/03 - Reference Heroes/store_a_hero_01.png"
+  --refs "$product_reference" "{{MEMORY_DIR}}/03 Assets/Reference Heroes/{{FIRST_STORE}}_hero_01.png"
 
 # Batch mode (only contains the exact slots the user chose to generate):
 uv run --script "{{MEMORY_DIR}}/tools/kie_generate.py" \
   --product-dir "$product_dir" \
   --batch "$product_dir/batch.json"
 ```
-- **`01` (Main Hero Picture):** Pass the color's reference photo + the store's Hero `01` reference image from `03 - Reference Heroes/`.
+- **`01` (Main Hero Picture):** Pass the color's reference photo + the store's Hero `01` reference image from `03 Assets/Reference Heroes/<store>_hero_01.png`.
 - **`02`, `03`... (Selected Gallery Shots):** Pass the color's reference photo(s) using only the gallery prompts the user picked.
 - **Recovery:** If a task ends in `submitting` or `submission-unknown`, do NOT resubmit blindly. Reconcile in Kie.ai and run the same command with `--adopt-task-id <verified-id>`. Use `--retry-failed` only after a confirmed provider failure and user approval.
 
@@ -78,7 +82,7 @@ Show the user the generated gallery images and `ads_folder/` visuals + `ad-copy.
 
 ## Step 9 — Product Page Marketing Sections
 1. Open the target store's **Code Repository** (from `PROFILE.md`).
-2. Design custom product-page marketing sections using the live product URL/slug and marketing note path.
+2. Design custom product-page marketing sections using the live product URL/slug and the marketing note path (`{{MEMORY_DIR}}/01 Products/<store>/<product_name>.md`).
 3. Confirm proposed code changes with the user first (Rule 2), implement, and run `npm run lint`, `npx tsc --noEmit`, and `npm run build`.
 4. After explicit deployment approval, deploy and verify the live product page and checkout controls.
 

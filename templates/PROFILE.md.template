@@ -1,42 +1,43 @@
 # Profile & System Map
 
 ## Who I Am
-{{USER_NAME}}. Describe your stores, projects, and hosting stack here (e.g., cash-on-delivery e-commerce stores or web applications).
+{{USER_NAME}}. Describe your company, stores, niches, and hosting stack here (e.g., cash-on-delivery e-commerce brands or SaaS applications).
 
 ## Key System Paths
-Add each store or project column below:
+All memory files and Obsidian marketing folders live inside this single unified vault (`{{MEMORY_DIR}}`). Each store or niche has its own subfolder under `01 Products/<store>/` and its own filtered Obsidian Base table in `02 Bases/<store>_Marketing.base`:
 
-| Resource | Store A (`store-a`) | Store B (`store-b`) |
-|---|---|---|
-| **Store Code Repository** | `/path/to/store-a-repo` | `/path/to/store-b-repo` |
-| **Obsidian Marketing Vault** | `/path/to/STORE_A_vault` | `/path/to/STORE_B_vault` |
-| **Marketing Table (`02 Bases`)** | `02 Bases/Products_Marketing.base` | `02 Bases/Products_Marketing.base` |
-| **Marketing Plans (`01 Products`)** | `01 Products/<product>.md` | `01 Products/<product>.md` |
-| **Product Pictures Folder** | `/path/to/store_a_pics` (`staging/` & `uploaded/`) | `/path/to/store_b_pics` (`staging/` & `uploaded/`) |
-| **Hero `01` Reference Image** | `{{MEMORY_DIR}}/03 - Reference Heroes/store_a_hero_01.png` | `{{MEMORY_DIR}}/03 - Reference Heroes/store_b_hero_01.png` |
-| **Hero `01` Live Style URL** | `https://store-a.example.com` | `https://store-b.example.com` |
-| **Catalog API Env** | `~/.config/store-a/catalog-agent.env` | `~/.config/store-b/catalog-agent.env` |
-| **Kie.ai Image Generator** | `{{MEMORY_DIR}}/tools/kie_generate.py` (env: `~/.config/kie/kie.env`) | `{{MEMORY_DIR}}/tools/kie_generate.py` |
+{{STORE_PATHS_TABLE}}
 
-## Memory Structure (`{{MEMORY_DIR}}`)
+## Unified Vault Structure (`{{MEMORY_DIR}}`)
 ```text
-AGENTS.md                <- Boot instructions for any AI harness opening this folder
-PROFILE.md               <- This file: identity, store/project paths, skills, and preferences
-TODO.md                  <- Active task queue, pilot state, and recent log
-LAUNCH-PIPELINE.md       <- End-to-end 10-step product launch SOP
-03 - Reference Heroes/   <- Store hero 01 reference images (e.g. store_a_hero_01.png)
-tools/kie_generate.py    <- Crash-safe, batch-capable Kie.ai image generator with flock locking
+AGENTS.md                            <- Boot instructions for any AI harness opening this vault
+PROFILE.md                           <- This file: identity, store/niche paths, skills, and preferences
+TODO.md                              <- Active task queue, pilot state, and recent log
+LAUNCH-PIPELINE.md                   <- End-to-end 10-step product launch SOP (Steps 0 to 10)
+00 Templates/
+└── Product Template.md              <- Shared YAML schema & choice catalog for all product notes
+01 Products/
+{{PRODUCTS_TREE_LINES}}
+02 Bases/
+├── Products_Marketing.base          <- Master Obsidian Base table across all stores/niches
+{{BASES_TREE_LINES}}
+03 Assets/
+├── Product images/                  <- Cover images referenced by [[03 Assets/Product images/...]]
+└── Reference Heroes/                <- Store Hero 01 style reference images for Kie.ai
+tools/
+├── kie_generate.py                  <- Crash-safe, batch-capable Kie.ai image generator with flock locking
+└── test_kie_generate.py             <- 13 offline regression tests (zero API cost)
 ```
 
 ## Installed Skills (`~/.agents/skills`)
-- `ai-memory-kit` — loads and updates this memory vault (`PROFILE.md`, `TODO.md`, `LAUNCH-PIPELINE.md`) on demand from any folder on the machine.
+- `ai-memory-kit` — loads and updates this unified vault (`PROFILE.md`, `TODO.md`, `LAUNCH-PIPELINE.md`, `01 Products/`) on demand from any folder on the machine, and can onboard new stores/niches.
 - *(Optional)* `morocco-cod-marketing`, `zehri-catalog`, `product-page-marketing-sections`, `image-to-webp`, `coolify-deploy`, `meta-pixel-capi`, `git-checkpoint`.
 
 ## Preferences for Working with AI
 - **Simple, direct language:** No fluff. Use simple words, keep answers brief, and include a short dummy example when it helps.
 - **No em-dashes** in marketing copy.
-- **Marketing plan notes:**
-  - The note filename must be the marketing product name (e.g. `PRODUCT NAME.md`) so the Obsidian Base table column shows it cleanly.
+- **Marketing plan notes (`01 Products/<store>/<product>.md`):**
+  - The note filename must be the marketing product name (e.g. `SANS ESCALE.md`) so the Obsidian Base table column shows it cleanly.
   - The note title is a single H1 with the marketing product name and no description line under it; factual catalog identity stays in the note body.
-  - Always fill `cover` with a real product image converted into `03 Assets/Product images` (never leave `cover` empty).
+  - Always fill `cover` with a real product image saved in `03 Assets/Product images/` using `cover: "[[03 Assets/Product images/<filename>]]"` (never leave `cover` empty).
 - **Push back** when an idea is wrong, and don't settle for half-finished work.

@@ -1,32 +1,47 @@
 # ai-memory-boilerplate
 
-A lightweight, **3-file external memory system + on-demand skill** for AI coding agents (**Antigravity, Claude Code, Codex, DSH, OpenCode, Cursor**).
+An **all-in-one AI External Memory + Obsidian Marketing Vault boilerplate** with an **on-demand skill (`ai-memory-kit`)** for AI coding agents (**Antigravity, Claude Code, Codex, DSH, OpenCode, Cursor**).
 
-Most AI memory setups fail because they force models to maintain 6+ folders, strict YAML frontmatter, manual folder indexes, and fragile cross-vault `[[wikilinks]]`. Models get "checklist fatigue" and break links.
-
-**`ai-memory-boilerplate`** strips external memory down to what actually works: **3 plain Markdown files**, **per-project `AGENTS.md` isolation** (no global config pollution), and an **on-demand skill (`ai-memory-kit`)** you can call from any folder on your machine.
+Instead of switching between separate Obsidian vaults for your AI memory and each store/niche (`STORE_A_vault`, `STORE_B_vault`, `AI_MEMORY_vault`), **`ai-memory-boilerplate`** unifies everything into **one structured Obsidian vault**:
+- **4 plain Markdown memory files** (`AGENTS.md`, `PROFILE.md`, `TODO.md`, `LAUNCH-PIPELINE.md`) at the root for zero-friction AI context.
+- **Built-in multi-store Obsidian Marketing Vault folders** (`00 Templates/`, `01 Products/<store>/`, `02 Bases/`, `03 Assets/`) pre-configured with Obsidian Bases tables and cover images.
+- **Crash-safe Kie.ai image generator** (`tools/kie_generate.py`) with `flock` locking and offline tests.
+- **On-demand skill (`ai-memory-kit`)** you can call from any folder on your machine.
 
 ---
 
-## How It Works
+## How It Works (One Unified Vault)
 
 ```text
-your-memory-folder/
-├── AGENTS.md                # Boot rules when opening the memory folder directly
-├── PROFILE.md               # Identity, store/project paths table, and AI style rules
-├── TODO.md                  # Single open task queue + recent completed changelog
-├── LAUNCH-PIPELINE.md       # End-to-end 10-step product launch SOP (Steps 0 to 10)
-├── 03 - Reference Heroes/   # Store Hero 01 style reference images
+your-memory-vault/
+├── .obsidian/                           # Pre-configured for Obsidian Bases + 00 Templates
+├── AGENTS.md                            # Boot rules when opening the vault directly
+├── PROFILE.md                           # Identity, multi-store/niche paths table, and AI style rules
+├── TODO.md                              # Single open task queue + recent completed changelog
+├── LAUNCH-PIPELINE.md                   # End-to-end 10-step product launch SOP (Steps 0 to 10)
+├── 00 Templates/
+│   └── Product Template.md              # Shared YAML schema & choice catalog (angles, emotions, hooks, copy)
+├── 01 Products/
+│   ├── store-a/                         # Per-store / per-niche product marketing notes
+│   └── store-b/
+├── 02 Bases/
+│   ├── Products_Marketing.base          # Master Obsidian Base table across all stores/niches
+│   ├── store-a_Marketing.base           # Filtered Obsidian Base table for store-a
+│   └── store-b_Marketing.base           # Filtered Obsidian Base table for store-b
+├── 03 Assets/
+│   ├── Product images/                  # Product cover images referenced by [[03 Assets/Product images/...]]
+│   └── Reference Heroes/                # Store Hero 01 style reference images for Kie.ai
 └── tools/
-    ├── kie_generate.py      # Crash-safe, batch-capable Kie.ai image generator (with flock locking)
-    └── test_kie_generate.py # 13 offline regression tests (zero API cost)
+    ├── kie_generate.py                  # Crash-safe, batch-capable Kie.ai image generator (with flock locking)
+    └── test_kie_generate.py             # 13 offline regression tests (zero API cost)
 ```
 
-### Why This Architecture Works Better
-1. **Zero Global Pollution:** No global `~/.claude/CLAUDE.md` or `~/.dsh/AGENTS.md` forcing your side-projects to load unrelated rules. Only projects you choose connect to your memory.
-2. **Call From Any Folder (`ai-memory-kit` skill):** Open any random folder on your laptop and say *"use `ai-memory-kit`"* to check tasks, save a decision, or register a new project on demand.
-3. **Resumable Pipelines (`PIPELINE.md` + `state.json`):** Multi-step workflows track step completion on disk so a crashed session resumes at the exact unfinished step without repeating paid API calls.
-4. **Git-Backed in 5 Seconds:** Because the whole memory is just 3 Markdown files, `git diff` and `git push` give you instant version history and off-device backups.
+### Why This Unified Architecture Works Better
+1. **One Obsidian Vault for Everything:** Never switch vaults again. Manage all your stores, niches, product marketing plans, visual Obsidian Base tables, and AI task queues in one window.
+2. **Multi-Store & Multi-Niche Ready:** Each brand/niche gets its own `01 Products/<store>/` folder and dedicated `02 Bases/<store>_Marketing.base` table while sharing `00 Templates/Product Template.md` and `03 Assets/Product images/`.
+3. **Zero Global Pollution:** No global `~/.claude/CLAUDE.md` or `~/.dsh/AGENTS.md` forcing unrelated side-projects to load e-commerce rules. Only projects you choose connect to your vault.
+4. **Call From Any Folder (`ai-memory-kit` skill):** Open any folder on your laptop and say *"use `ai-memory-kit`"* to check tasks, create a marketing plan in `01 Products/<store>/`, or onboard a new store/niche.
+5. **Resumable Pipelines (`LAUNCH-PIPELINE.md` + `launch-state.json`):** Multi-step product launches track step completion and image slots on disk under an exclusive `flock` lock so interrupted sessions resume without repeating paid API calls.
 
 ---
 
@@ -39,53 +54,82 @@ Requirements: **Python 3.10+** and **Git**.
 git clone https://github.com/YOUR_USERNAME/ai-memory-boilerplate.git
 cd ai-memory-boilerplate
 
-# 2. Initialize your memory folder and install the on-demand skill
-python3 scripts/setup.py --memory-dir "$HOME/Work/ai-memory" --name "Your Name" --install-skill
+# 2. Initialize your unified vault for your stores/niches and install the skill
+python3 scripts/setup.py \
+  --memory-dir "$HOME/Work/ai-memory" \
+  --name "Your Name" \
+  --stores "zehri,hellobaby" \
+  --install-skill
 ```
 
 What `setup.py` does:
-- Creates `$HOME/Work/ai-memory` with `AGENTS.md`, `PROFILE.md`, `TODO.md`, `LAUNCH-PIPELINE.md`, `03 - Reference Heroes/`, and `tools/kie_generate.py` (never overwrites existing files unless `--force` is passed).
+- Creates `$HOME/Work/ai-memory` with `AGENTS.md`, `PROFILE.md`, `TODO.md`, and `LAUNCH-PIPELINE.md` pre-populated with your `--stores` columns.
+- Scaffolds the marketing vault folders:
+  - `00 Templates/Product Template.md`
+  - `01 Products/<store>/` for each store
+  - `02 Bases/Products_Marketing.base` (master table) + `02 Bases/<store>_Marketing.base` (per-store tables)
+  - `03 Assets/Product images/` and `03 Assets/Reference Heroes/`
+  - `.obsidian/` settings so Obsidian **Bases** and **Templates** work out of the box
+- Copies `tools/kie_generate.py` and `tools/test_kie_generate.py` (never overwrites existing files unless `--force` is passed).
 - Initializes a Git repository inside `$HOME/Work/ai-memory`.
-- Installs the **`ai-memory-kit`** skill into `~/.agents/skills/ai-memory-kit/SKILL.md` pointing to your new memory folder.
+- Installs the **`ai-memory-kit`** skill into `~/.agents/skills/ai-memory-kit/SKILL.md`.
+
+### Adding a New Store or Niche Later
 
 ```bash
+python3 scripts/setup.py --memory-dir "$HOME/Work/ai-memory" --add-store "new-brand"
+```
+This automatically creates `01 Products/new-brand/`, creates `02 Bases/new-brand_Marketing.base`, adds a `new-brand Products` view tab to `02 Bases/Products_Marketing.base`, and appends the `new-brand` column to `PROFILE.md`.
+
+### Health Check & Offline Tests
+
+```bash
+# Verify required files, marketing folders, YAML schema keys, cover image links, and secret leaks
+python3 scripts/verify.py --memory-dir "$HOME/Work/ai-memory"
+
+# Run offline unit tests for vault setup & verification (4 tests)
+python3 scripts/test_vault.py
+
 # Run offline unit tests for the Kie.ai batch & recovery generator (13 tests, 0 API calls)
 uv run --script tools/test_kie_generate.py
 ```
 
 ---
 
-## 3 Ways to Use Your Memory
+## 3 Ways to Use Your Unified Vault
 
 ### 1. On-Demand From Any Folder (Via the Skill)
 Open **any** folder on your laptop in your AI tool and type:
 - *"use `ai-memory-kit` and check my open tasks"*
-- *"use `ai-memory-kit` and save a task to finish the auth refactor tomorrow"*
-- *"use `ai-memory-kit` and register this project in `PROFILE.md` so it can use `PIPELINE.md`"*
+- *"use `ai-memory-kit` and create a marketing plan for a new product under `01 Products/zehri/`"*
+- *"use `ai-memory-kit` and onboard a new store called `cosmetics` into `PROFILE.md` and `01 Products/`"*
 
 ### 2. Automatic Per-Project Connection (No Symlinks)
-If you want a specific project repository to load your memory automatically every time you open it, paste these 5 lines at the top of that project's local `AGENTS.md`:
+If you want a specific store or project repository to load your unified vault automatically every time you open it, paste these 5 lines at the top of that project's local `AGENTS.md`:
 
 ```markdown
 ## External Memory & Workflow
-Shared cross-session memory lives in ~/Work/ai-memory:
+Shared cross-session memory & marketing vault lives in ~/Work/ai-memory:
 - System Map & Preferences: ~/Work/ai-memory/PROFILE.md
 - Open Tasks & Log: ~/Work/ai-memory/TODO.md
 - 10-Step Product Launch SOP: ~/Work/ai-memory/LAUNCH-PIPELINE.md
 ```
 
-### 3. Direct Memory Management
-Open your `$HOME/Work/ai-memory` folder directly in your AI tool or Obsidian to plan across all your projects at once.
+### 3. Direct Vault Management in Obsidian
+Open `$HOME/Work/ai-memory` in **Obsidian**:
+- Open `02 Bases/Products_Marketing.base` to view all products across every store/niche with cover images.
+- Open `02 Bases/<store>_Marketing.base` to view a single store's product marketing table.
+- Edit `00 Templates/Product Template.md` to customize discovery methods, categories, angles, emotions, hooks, or creative techniques for your specific niche.
 
 ---
 
 ## Customizing `LAUNCH-PIPELINE.md` for Your Domain
 
-`templates/LAUNCH-PIPELINE.md.template` includes the complete **10-step E-Commerce Product Launch Pipeline (Steps 0 to 10)** with:
+`templates/LAUNCH-PIPELINE.md.template` includes the complete **10-step E-Commerce Product Launch Pipeline (Steps 0 to 10)**:
 - **Step 0 (Resume & State Check):** Reads a per-product `launch-state.json` under an exclusive `flock` lock so interrupted runs never repeat completed work.
-- **Step 1 & 2 (Photos & Marketing Plan):** Direct per-store Obsidian marketing vault targeting (no fragile symlinks).
+- **Step 1 & 2 (Photos & Marketing Plan):** Creates `01 Products/<store>/<product_name>.md` directly inside the unified vault using `00 Templates/Product Template.md` and saves the cover image to `03 Assets/Product images/`.
 - **Step 3 (Staging Folder Tree):** Standardized `staging/<product_name>/` + color variant subfolders + `ads_folder/`.
-- **Steps 4, 5 & 6 (Kie.ai Gallery & Static Ads + Token-Saving Gate):** Includes `tools/kie_generate.py` (supports single-image and `--batch` mode, input SHA-256 fingerprinting, `--adopt-task-id`, and `--retry-failed`) and always asks which specific gallery positions and ads to generate before spending API credits.
+- **Steps 4, 5 & 6 (Kie.ai Gallery & Static Ads + Token-Saving Gate):** Uses `tools/kie_generate.py` and `03 Assets/Reference Heroes/<store>_hero_01.png` (supports single-image and `--batch` mode, input SHA-256 fingerprinting, `--adopt-task-id`, and `--retry-failed`) and always asks which specific gallery positions and ads to generate before spending API credits.
 - **Steps 7, 8, 9 & 10 (Review Gate -> Catalog -> Landing Page Sections -> Paused Meta Ads Drafts):** Hard human approval stops before live catalog uploads, code changes, deployments, or ad creation.
 
 ---
@@ -94,22 +138,26 @@ Open your `$HOME/Work/ai-memory` folder directly in your AI tool or Obsidian to 
 
 ```text
 ai-memory-boilerplate/
-├── README.md                              # Documentation
-├── LICENSE                                # MIT License
+├── README.md                                  # Documentation
+├── LICENSE                                    # MIT License
 ├── scripts/
-│   ├── setup.py                           # CLI installer (creates memory folder, copies tools, installs skill)
-│   └── verify.py                          # Read-only health & secret-leak checker
+│   ├── setup.py                               # CLI installer (--stores, --add-store, --install-skill)
+│   ├── verify.py                              # Health, frontmatter, cover-link & secret-leak checker
+│   └── test_vault.py                          # Offline unit tests for setup.py and verify.py
 ├── skill/
 │   └── ai-memory-kit/
-│       └── SKILL.md.template              # On-demand skill template for ~/.agents/skills/
+│       └── SKILL.md.template                  # On-demand skill template for ~/.agents/skills/
 ├── templates/
-│   ├── AGENTS.md.template                 # Memory workspace boot instructions
-│   ├── PROFILE.md.template                # Identity, store/project paths table, and AI preferences
-│   ├── TODO.md.template                   # Open tasks queue and recent completed log
-│   └── LAUNCH-PIPELINE.md.template        # Full 10-step product launch pipeline (Steps 0 to 10)
+│   ├── AGENTS.md.template                     # Unified vault boot instructions
+│   ├── PROFILE.md.template                    # Identity, dynamic multi-store paths table, and AI rules
+│   ├── TODO.md.template                       # Open tasks queue and recent completed log
+│   ├── LAUNCH-PIPELINE.md.template            # Full 10-step product launch pipeline (Steps 0 to 10)
+│   ├── Product Template.md.template           # Marketing note YAML schema & choice catalog for 00 Templates/
+│   ├── Products_Marketing.base.template       # Obsidian Base table template for 02 Bases/
+│   └── obsidian/plugins/good-bases/           # Bundled GoodBases (notion-table) Obsidian plugin
 └── tools/
-    ├── kie_generate.py                    # Crash-safe, batch-capable Kie.ai image generator
-    └── test_kie_generate.py               # 13 offline unit tests for recovery, locking, and batch mode
+    ├── kie_generate.py                        # Crash-safe, batch-capable Kie.ai image generator
+    └── test_kie_generate.py                   # 13 offline unit tests for recovery, locking, and batch mode
 ```
 
 ## License

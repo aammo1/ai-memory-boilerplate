@@ -1,25 +1,71 @@
 ---
 name: ai-memory-kit
 description: >-
-  Load and update the user's external 3-file AI memory vault ({{MEMORY_DIR}})
+  Load and manage the user's unified AI memory and Obsidian marketing vault ({{MEMORY_DIR}})
   from any project or workspace. Use when the user asks to use ai-memory-kit,
-  recall system paths or open tasks, save a new project or task to memory,
+  recall system paths or open tasks, create or review product marketing plans in 01 Products/,
+  customize 00 Templates/Product Template.md for their niche, onboard a new company/store/niche,
   or run the 10-step product launch pipeline (LAUNCH-PIPELINE.md).
 ---
 
-# AI Memory Kit Skill (`ai-memory-kit`)
+# AI Memory & Marketing Vault Skill (`ai-memory-kit`)
 
-This skill connects the current session (from any folder on the machine) to the user's external memory at `{{MEMORY_DIR}}`.
+This skill connects the current session (from any folder on the machine) to the user's unified AI Memory + Obsidian Marketing Vault at `{{MEMORY_DIR}}`.
 
 ## Step 1 — Load Memory Immediately
 When this skill is invoked, read these files in full before answering or acting:
 1. `{{MEMORY_DIR}}/AGENTS.md` (Core operating rules)
-2. `{{MEMORY_DIR}}/PROFILE.md` (Identity, system paths, stores/projects, and preferences)
+2. `{{MEMORY_DIR}}/PROFILE.md` (Identity, system paths, stores/niches table, and preferences)
 3. `{{MEMORY_DIR}}/TODO.md` (Open task queue and recent completed log)
-4. `{{MEMORY_DIR}}/LAUNCH-PIPELINE.md` (End-to-end 10-step product launch pipeline — works for any store or project added to `PROFILE.md`)
+4. `{{MEMORY_DIR}}/LAUNCH-PIPELINE.md` (End-to-end 10-step product launch pipeline)
 
-## Step 2 — Actions You Can Perform
-- **Run the Product Launch Pipeline (Steps 0 to 10):** Any store or project can execute `LAUNCH-PIPELINE.md` using its paths in `PROFILE.md` and `{{MEMORY_DIR}}/tools/kie_generate.py`.
-- **Onboard a New Store / Project to the Pipeline:** When the user starts a new store or project, add a new column/entry for it in `{{MEMORY_DIR}}/PROFILE.md` (Store Repo, Marketing Vault, Product Pictures Folder, Hero `01` Reference Image, Catalog API Env) and optionally add the `AGENTS.md` pointer block to the new repo (after confirming per Rule 2).
-- **Orient / Recall:** Answer questions using verified facts from `PROFILE.md`, `TODO.md`, or a product's `launch-state.json`.
-- **Save Tasks / Log Progress:** Update `{{MEMORY_DIR}}/TODO.md` (`## Open Tasks` or `## Recent Log`).
+## Step 2 — Unified Vault Structure & Rules
+All stores, brands, and niches live inside `{{MEMORY_DIR}}`:
+- **Template & Pre-Choices:** `{{MEMORY_DIR}}/00 Templates/Product Template.md`
+- **Per-Store Product Notes:** `{{MEMORY_DIR}}/01 Products/<store>/<product_name>.md`
+- **Obsidian Base Tables:**
+  - Master table: `{{MEMORY_DIR}}/02 Bases/Products_Marketing.base` (`file.inFolder("01 Products")`)
+  - Per-store table: `{{MEMORY_DIR}}/02 Bases/<store>_Marketing.base` (`file.inFolder("01 Products/<store>")`)
+- **Shared Cover Images:** `{{MEMORY_DIR}}/03 Assets/Product images/`
+- **Store Hero References:** `{{MEMORY_DIR}}/03 Assets/Reference Heroes/<store>_hero_01.png`
+- **Kie.ai Image Generator:** `{{MEMORY_DIR}}/tools/kie_generate.py`
+
+## Step 3 — Actions You Can Perform
+
+### 1. Create or Update Product Marketing Notes (`01 Products/<store>/<product_name>.md`)
+- Always read `{{MEMORY_DIR}}/00 Templates/Product Template.md` before creating or updating a note.
+- Treat the template's YAML list items as a **choice catalog** (pre-choices), never as all-selected defaults. Initialize list properties as `[]` and only write exact approved values from the template (preserving exact emojis and spelling).
+- Save the approved product cover image into `{{MEMORY_DIR}}/03 Assets/Product images/<filename>` and set the frontmatter property to:
+  ```yaml
+  cover: "[[03 Assets/Product images/<filename>]]"
+  ```
+- If the user's specialized marketing skill (e.g. `morocco-cod-marketing`) is installed, follow its workflow while targeting `{{MEMORY_DIR}}` as the vault root and saving the product note under `01 Products/<store>/<product_name>.md`.
+
+### 2. Onboard a New Store, Brand, or Niche
+When the user wants to add a new store or niche (`<store_slug>`):
+1. Create directory `{{MEMORY_DIR}}/01 Products/<store_slug>/`.
+2. Create `{{MEMORY_DIR}}/02 Bases/<store_slug>_Marketing.base` by copying `{{MEMORY_DIR}}/02 Bases/Products_Marketing.base` and updating its filter and view name:
+   ```yaml
+   filters:
+     and:
+       - file.inFolder("01 Products/<store_slug>")
+   ```
+3. Add a new `<store_slug>` column to the Key System Paths table in `{{MEMORY_DIR}}/PROFILE.md` (Store Code Repository, `01 Products/<store_slug>/<product>.md`, `02 Bases/<store_slug>_Marketing.base`, Product Pictures Folder, `03 Assets/Reference Heroes/<store_slug>_hero_01.png`, Catalog API Env).
+4. If the user wants to connect an existing code repository to this vault, ask for confirmation (Rule 2) and add this block at the top of that repository's local `AGENTS.md`:
+   ```markdown
+   ## External Memory & Workflow
+   Shared cross-session memory & marketing vault lives in {{MEMORY_DIR}}:
+   - System Map & Preferences: {{MEMORY_DIR}}/PROFILE.md
+   - Open Tasks & Log: {{MEMORY_DIR}}/TODO.md
+   - 10-Step Product Launch SOP: {{MEMORY_DIR}}/LAUNCH-PIPELINE.md
+   ```
+
+### 3. Customize `00 Templates/Product Template.md` for a Specific Niche
+If the user wants to adapt the vault for a new industry or niche, add their custom categories, angles, or hooks to the YAML lists in `{{MEMORY_DIR}}/00 Templates/Product Template.md` while keeping the property keys intact so `02 Bases/*.base` continues to work without changes.
+
+### 4. Run the Product Launch Pipeline (Steps 0 to 10)
+Execute `{{MEMORY_DIR}}/LAUNCH-PIPELINE.md` for any store in `PROFILE.md`, tracking per-product state in `<product_dir>/launch-state.json` and generating gallery/ad visuals with `{{MEMORY_DIR}}/tools/kie_generate.py`.
+
+### 5. Orient, Recall, and Log Tasks
+- Answer questions using verified facts from `PROFILE.md`, `TODO.md`, `01 Products/`, or a product's `launch-state.json`.
+- Update `{{MEMORY_DIR}}/TODO.md` (`## Open Tasks` or `## Recent Log`) when priorities change or milestones finish.

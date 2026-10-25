@@ -1,0 +1,1220 @@
+/* ============================================================
+   Notion Bases — table view styled to Notion's design language
+   Typography, borders, hover states, and pills match Notion.
+   ============================================================ */
+
+.ntn-root {
+	--ntn-text: rgb(55, 53, 47);
+	--ntn-text-muted: rgba(55, 53, 47, 0.65);
+	--ntn-border: rgb(233, 233, 231);
+	--ntn-hover: rgba(55, 53, 47, 0.04);
+	--ntn-active: rgba(55, 53, 47, 0.08);
+	/* Notion's blue accent — the column resize line. */
+	--ntn-accent: rgb(35, 131, 226);
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica,
+		Arial, sans-serif;
+	font-size: 14px;
+	color: var(--ntn-text);
+	overflow-x: auto;
+	padding-bottom: 24px;
+}
+
+.theme-dark .ntn-root {
+	--ntn-text: rgba(255, 255, 255, 0.81);
+	--ntn-text-muted: rgba(255, 255, 255, 0.443);
+	--ntn-border: rgb(47, 47, 47);
+	--ntn-hover: rgba(255, 255, 255, 0.055);
+	--ntn-active: rgba(255, 255, 255, 0.03);
+}
+
+/* ---------------- Table chrome ---------------- */
+
+/* width: max-content lets every column take its natural width; min-width
+   keeps the table filling wide panes. In narrow containers (embeds, both
+   reading and edit mode) the table overflows into .ntn-root's horizontal
+   scroll instead of crushing every column to ~30px.
+   The doubled class matters: in reading mode the view sits inside
+   .markdown-rendered, where Obsidian's and themes' `table` rules
+   (e.g. `.markdown-rendered table { width: 100% }`) outrank a bare class
+   selector and re-crush the columns. (0,3,0) outranks them by specificity
+   alone — don't simplify it back or reach for !important (community CSS
+   lint); if a theme still wins, add MORE specificity. */
+.ntn-root .ntn-table.ntn-table {
+	border-collapse: collapse;
+	display: table;
+	table-layout: auto;
+	width: max-content;
+	min-width: 100%;
+	max-width: none;
+	border-top: 1px solid var(--ntn-border);
+	margin: 0;
+}
+
+.ntn-root .ntn-th {
+	font-weight: 400;
+	font-size: 14px;
+	color: var(--ntn-text-muted);
+	text-align: left;
+	vertical-align: middle;
+	padding: 0 8px;
+	height: 34px;
+	/* Anchors the absolutely positioned .ntn-col-resize handle. */
+	position: relative;
+	border-bottom: 1px solid var(--ntn-border);
+	-webkit-user-select: none;
+	user-select: none;
+}
+
+/* Some themes (and Obsidian's core .markdown-rendered rules) fill table
+   headers with a light background, which looks wrong in dark mode. Keep the
+   header transparent so it follows the page background, like Notion. The
+   doubled class / thead selectors out-rank those theme rules by specificity
+   (see bug history #4) — don't reach for !important. */
+.ntn-root .ntn-table thead,
+.ntn-root .ntn-table thead tr,
+.ntn-root .ntn-table tfoot,
+.ntn-root .ntn-table tfoot tr,
+.ntn-root .ntn-th.ntn-th {
+	background: transparent;
+}
+
+/* Lock header/cell horizontal padding so reading mode matches edit mode. In
+   reading mode the view sits inside .markdown-rendered, whose core/theme
+   th/td padding (often padding-inline) out-ranks the base rules above and
+   shifts columns to the right. The doubled class wins by specificity
+   (see bug history #4) — keep the values in sync with .ntn-th / .ntn-td. */
+.ntn-root .ntn-th.ntn-th {
+	padding-left: 8px;
+	padding-right: 8px;
+	/* .ntn-th has no vertical-align by default; reading mode's
+	   .markdown-rendered th sets its own, so the header text lands at a
+	   different height than in edit mode. Pin it to middle (matching td). */
+	vertical-align: middle;
+	/* Reading-mode th rules from Obsidian/themes wrap header text — keep
+	   headers on one line so columns size to their natural width. */
+	white-space: nowrap;
+	word-break: normal;
+}
+
+.ntn-root .ntn-td.ntn-td {
+	padding-left: 8px;
+	padding-right: 8px;
+	/* Obsidian's editor/reading-mode styles set break-word/break-all;
+	   in a squeezed column that wraps text one character per line. */
+	word-break: normal;
+	overflow-wrap: normal;
+}
+
+.ntn-th-icon {
+	font-size: 12px;
+	margin-right: 6px;
+	opacity: 0.7;
+	letter-spacing: 0.5px;
+}
+
+.ntn-vlines .ntn-th,
+.ntn-vlines .ntn-td {
+	border-right: 1px solid var(--ntn-border);
+}
+
+.ntn-vlines .ntn-th:last-child,
+.ntn-vlines .ntn-td:last-child {
+	border-right: none;
+}
+
+.ntn-root .ntn-td {
+	padding: 6px 8px;
+	min-height: 32px;
+	border-bottom: 1px solid var(--ntn-border);
+	vertical-align: middle;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 280px;
+}
+
+/* Rendered values (links, dates…) carry their own white-space and
+   word-break rules in reading mode — force them to stay on one line;
+   the cell truncates with ellipsis. Scoped so "Wrap cell content"
+   (.ntn-wrap) can still wrap, but never break inside words. The doubled
+   .ntn-cell out-ranks core/theme rules on rendered content (external
+   links use break-all) by specificity — no !important (see bug
+   history #4). */
+.ntn-root:not(.ntn-wrap) .ntn-cell.ntn-cell,
+.ntn-root:not(.ntn-wrap) .ntn-cell.ntn-cell * {
+	white-space: nowrap;
+}
+
+.ntn-root .ntn-cell.ntn-cell,
+.ntn-root .ntn-cell.ntn-cell * {
+	word-break: normal;
+	overflow-wrap: normal;
+}
+
+.ntn-wrap .ntn-td {
+	white-space: normal;
+}
+
+/* Notion's signature: whole-row hover wash */
+.ntn-row {
+	transition: background 20ms ease-in;
+}
+
+.ntn-row:hover {
+	background: var(--ntn-hover);
+}
+
+/* ---------------- Column resizing ---------------- */
+
+/* A hit area straddling the header's right edge. Widths themselves are set
+   inline (per column, on every th/td) by the view — see applyColumnWidth. */
+.ntn-col-resize {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	right: -3px;
+	width: 6px;
+	z-index: 1;
+	cursor: col-resize;
+	/* Keep the drag a drag: no text selection, no touch scrolling. */
+	-webkit-user-select: none;
+	user-select: none;
+	touch-action: none;
+}
+
+/* Notion's blue line, revealed on hover and held while dragging. */
+.ntn-col-resize::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 2px;
+	width: 2px;
+	background: var(--ntn-accent);
+	opacity: 0;
+	transition: opacity 20ms ease-in;
+}
+
+.ntn-col-resize:hover::after,
+.ntn-col-resize-active::after {
+	opacity: 1;
+}
+
+/* While dragging, the cursor stays col-resize wherever the pointer goes. */
+.ntn-resizing,
+.ntn-resizing * {
+	cursor: col-resize;
+	-webkit-user-select: none;
+	user-select: none;
+}
+
+/* ---------------- Column sorting ---------------- */
+
+/* The header's label (type glyph, name, sort arrow) on one centered flex
+   line, so the arrow icon sits level with the text. */
+.ntn-th-content {
+	display: inline-flex;
+	align-items: center;
+	max-width: 100%;
+}
+
+/* Sorting is a click on the header (Notion's column menu): the whole cell
+   reads as clickable and takes the hover wash. The wash selector has to
+   out-rank the transparent-header rule `.ntn-root .ntn-th.ntn-th` (bug
+   history #5) by specificity — no !important (bug history #4). */
+.ntn-root .ntn-th.ntn-th-sortable {
+	cursor: pointer;
+}
+
+.ntn-root .ntn-th.ntn-th-sortable:hover {
+	background: var(--ntn-hover);
+}
+
+/* Notion's direction arrow after a sorted column's name. */
+.ntn-th-sort {
+	display: inline-flex;
+	align-items: center;
+	margin-left: 4px;
+	color: var(--ntn-text-muted);
+}
+
+.ntn-th-sort svg {
+	width: 14px;
+	height: 14px;
+}
+
+/* ---------------- Calculate footer ---------------- */
+
+/* Notion's calculation row: right-aligned "LABEL value" per column, no
+   bottom hairline (the "+ New" row below draws its own). The doubled class
+   out-ranks .ntn-td's border/padding and .ntn-wrap's white-space by
+   specificity (bug history #4). */
+.ntn-root .ntn-calc.ntn-calc {
+	height: 32px;
+	padding-top: 0;
+	padding-bottom: 0;
+	border-bottom: none;
+	text-align: right;
+	white-space: nowrap;
+	color: var(--ntn-text-muted);
+	cursor: pointer;
+	-webkit-user-select: none;
+	user-select: none;
+	transition: background 20ms ease-in;
+}
+
+.ntn-root .ntn-calc.ntn-calc:hover {
+	background: var(--ntn-hover);
+}
+
+.ntn-calc-label {
+	font-size: 10px;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	margin-right: 6px;
+}
+
+.ntn-calc-value {
+	font-size: 14px;
+	color: var(--ntn-text);
+}
+
+/* The empty-cell prompt only shows while the pointer is on the row. */
+.ntn-calc-placeholder {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	font-size: 12px;
+	opacity: 0;
+	transition: opacity 20ms ease-in;
+}
+
+.ntn-calc-row:hover .ntn-calc-placeholder {
+	opacity: 1;
+}
+
+.ntn-calc-chevron {
+	display: inline-flex;
+	align-items: center;
+}
+
+.ntn-calc-chevron svg {
+	width: 12px;
+	height: 12px;
+}
+
+/* ---------------- Title column ---------------- */
+
+/* Width on the header cell pins the column in auto table layout —
+   min-width on td alone is unreliable and lets the column collapse. */
+.ntn-th.ntn-col-title {
+	width: 280px;
+	min-width: 280px;
+}
+
+.ntn-td.ntn-col-title {
+	min-width: 280px;
+}
+
+.ntn-title-wrap {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	position: relative;
+	min-width: 0;
+	padding-right: 4px;
+}
+
+.ntn-page-icon {
+	font-size: 14px;
+	flex-shrink: 0;
+	opacity: 0.8;
+}
+
+/* Notion's own page emoji is desaturated so it sits quietly beside the
+   title. An emoji the USER chose keeps its colors — hence the class rather
+   than putting grayscale on .ntn-page-icon itself. */
+.ntn-page-icon-emoji {
+	filter: grayscale(1);
+}
+
+/* Obsidian's icon set takes the current text color, so it follows whatever
+   theme is active instead of being a fixed glyph. */
+.ntn-page-icon-lucide {
+	display: inline-flex;
+	align-items: center;
+	color: var(--ntn-text-muted);
+}
+
+.ntn-page-icon-lucide svg {
+	width: 15px;
+	height: 15px;
+}
+
+.ntn-title-text {
+	font-weight: 500;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.16);
+	cursor: pointer;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	flex: 0 1 auto;
+	min-width: 0;
+}
+
+.theme-dark .ntn-title-text {
+	border-bottom-color: rgba(255, 255, 255, 0.14);
+}
+
+/* Hover-reveal OPEN button — absolutely anchored so it can never
+   squeeze the column or float loose in reading mode. */
+.ntn-open-btn {
+	display: none;
+	position: absolute;
+	right: 0;
+	top: 50%;
+	transform: translateY(-50%);
+	flex-shrink: 0;
+	font-size: 11px;
+	font-weight: 500;
+	letter-spacing: 0.5px;
+	color: var(--ntn-text-muted);
+	background: var(--background-primary);
+	border: 1px solid var(--ntn-border);
+	border-radius: 4px;
+	padding: 1px 6px;
+	cursor: pointer;
+	box-shadow: rgba(15, 15, 15, 0.1) 0 1px 2px;
+}
+
+.ntn-row:hover .ntn-col-title .ntn-open-btn {
+	display: inline-flex;
+	align-items: center;
+}
+
+.ntn-open-btn:hover {
+	background: var(--ntn-hover);
+}
+
+/* ---------------- Tag pills ---------------- */
+
+.ntn-pills {
+	display: flex;
+	flex-wrap: nowrap;
+	gap: 6px;
+	overflow: hidden;
+}
+
+.ntn-wrap .ntn-pills {
+	flex-wrap: wrap;
+}
+
+.ntn-pill {
+	display: inline-flex;
+	align-items: center;
+	height: 20px;
+	max-width: 100%;
+	padding: 0 6px;
+	border-radius: 3px;
+	font-size: 14px;
+	line-height: 120%;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	background: var(--ntn-pill-bg-light, #EBECED);
+	color: var(--ntn-pill-fg-light, #9B9A97);
+}
+
+.theme-dark .ntn-pill {
+	background: var(--ntn-pill-bg-dark, #454B4E);
+	color: var(--ntn-pill-fg-dark, rgba(151,154,155,0.95));
+}
+
+/* Tag pills open the search pane on click, like tags everywhere else. */
+.ntn-pill-tag {
+	cursor: pointer;
+}
+
+.ntn-pill-tag:hover {
+	text-decoration: underline;
+}
+
+/* ---------------- Group rows ---------------- */
+
+.ntn-group-row td {
+	padding: 14px 8px 6px;
+	border-bottom: 1px solid var(--ntn-border);
+}
+
+.ntn-group-count {
+	margin-left: 8px;
+	color: var(--ntn-text-muted);
+	font-size: 12px;
+}
+
+/* ---------------- "+ New" footer ---------------- */
+
+.ntn-new-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	height: 33px;
+	padding: 0 8px;
+	color: var(--ntn-text-muted);
+	cursor: pointer;
+	border-bottom: 1px solid var(--ntn-border);
+	-webkit-user-select: none;
+	user-select: none;
+	transition: background 20ms ease-in;
+}
+
+.ntn-new-row:hover {
+	background: var(--ntn-hover);
+}
+
+.ntn-new-plus {
+	font-size: 16px;
+	line-height: 1;
+}
+
+/* Keep Obsidian's native value widgets visually quiet inside cells */
+.ntn-cell {
+	color: var(--ntn-text);
+}
+
+.ntn-cell .metadata-input-longtext {
+	font-size: 14px;
+}
+
+/* DateValue.renderTo draws a DISABLED native date input; disabled controls
+   swallow clicks, so let them fall through to the cell's own click-to-edit
+   (which opens the calendar editor). */
+.ntn-cell .metadata-input:disabled {
+	pointer-events: none;
+}
+
+/* ---------------- Inline editing ---------------- */
+
+.ntn-editable {
+	cursor: text;
+}
+
+.ntn-editable:hover {
+	box-shadow: inset 0 0 0 1px var(--ntn-border);
+}
+
+.ntn-input {
+	/* width/height are set inline to the clicked cell's measured size;
+	   border-box makes that size include the padding below so the input
+	   matches the cell footprint exactly. */
+	box-sizing: border-box;
+	border: none;
+	outline: none;
+	background: var(--background-primary);
+	box-shadow: rgba(15, 15, 15, 0.05) 0 0 0 1px,
+		rgba(15, 15, 15, 0.1) 0 3px 6px,
+		rgba(15, 15, 15, 0.2) 0 9px 24px;
+	border-radius: 4px;
+	padding: 6px 8px;
+	font-family: inherit;
+	font-size: 14px;
+	line-height: 1.5;
+	color: var(--ntn-text);
+}
+
+/* Multi-line text cells edit in a textarea: wrap like the cell, start at the
+   top, and grow downward as the user types instead of scrolling sideways. */
+.ntn-textarea {
+	min-height: 32px;
+	resize: none;
+	overflow: auto;
+	white-space: pre-wrap;
+	word-break: normal;
+	vertical-align: top;
+}
+
+/* ---------------- Select editor (floating menu) ---------------- */
+
+.ntn-select-menu {
+	position: fixed;
+	z-index: var(--layer-menu, 30);
+	background: var(--background-primary);
+	border-radius: 8px;
+	box-shadow: rgba(15, 15, 15, 0.05) 0 0 0 1px,
+		rgba(15, 15, 15, 0.1) 0 3px 6px,
+		rgba(15, 15, 15, 0.2) 0 9px 24px;
+	max-width: 320px;
+	padding: 0;
+	overflow: hidden;
+}
+
+.ntn-select-current {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+	padding: 8px 10px;
+	background: var(--ntn-hover);
+	border-bottom: 1px solid var(--ntn-border);
+	cursor: text;
+}
+
+/* Sits as a flex item inside .ntn-select-current; wraps its own pills
+   and collapses entirely when the cell has no values. */
+.ntn-select-pills {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+	min-width: 0;
+}
+
+.ntn-select-pills:empty {
+	display: none;
+}
+
+.ntn-select-current .ntn-pill {
+	gap: 4px;
+}
+
+.ntn-pill-remove {
+	cursor: pointer;
+	font-size: 10px;
+	opacity: 0.5;
+	margin-left: 2px;
+}
+
+.ntn-pill-remove:hover {
+	opacity: 1;
+}
+
+.ntn-select-input {
+	flex: 1;
+	min-width: 60px;
+	border: none;
+	outline: none;
+	background: transparent;
+	font-family: inherit;
+	font-size: 14px;
+	color: var(--ntn-text);
+	padding: 2px 0;
+}
+
+.ntn-select-hint {
+	padding: 6px 10px 2px;
+	font-size: 12px;
+	color: var(--ntn-text-muted);
+	-webkit-user-select: none;
+	user-select: none;
+}
+
+.ntn-select-options {
+	max-height: 240px;
+	overflow-y: auto;
+	padding: 4px;
+}
+
+.ntn-select-option {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 5px 6px;
+	border-radius: 4px;
+	cursor: pointer;
+	transition: background 20ms ease-in;
+}
+
+.ntn-select-option:hover {
+	background: var(--ntn-hover);
+}
+
+.ntn-select-check {
+	margin-left: auto;
+	color: var(--ntn-text-muted);
+	font-size: 12px;
+}
+
+.ntn-select-create {
+	color: var(--ntn-text-muted);
+	font-size: 13px;
+}
+
+.ntn-select-empty {
+	padding: 6px;
+	color: var(--ntn-text-muted);
+	font-size: 13px;
+}
+
+/* Per-option color square (left of the label) — shows the value's current
+   color; click to change. */
+.ntn-select-color-btn {
+	flex: 0 0 auto;
+	width: 16px;
+	height: 16px;
+	border-radius: 4px;
+	cursor: pointer;
+	background: var(--ntn-pill-bg-light, #EBECED);
+	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+	transition: box-shadow 20ms ease-in;
+}
+
+.theme-dark .ntn-select-color-btn {
+	background: var(--ntn-pill-bg-dark, #454B4E);
+	box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.ntn-select-color-btn:hover {
+	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18), 0 0 0 2px var(--ntn-hover);
+}
+
+.theme-dark .ntn-select-color-btn:hover {
+	box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18), 0 0 0 2px var(--ntn-hover);
+}
+
+/* Color picker flyout (sibling popover anchored to the color button). */
+.ntn-color-menu {
+	position: fixed;
+	z-index: var(--layer-menu, 30);
+	background: var(--background-primary);
+	border-radius: 8px;
+	box-shadow: rgba(15, 15, 15, 0.05) 0 0 0 1px,
+		rgba(15, 15, 15, 0.1) 0 3px 6px,
+		rgba(15, 15, 15, 0.2) 0 9px 24px;
+	padding: 4px;
+	min-width: 170px;
+	max-height: 340px;
+	overflow-y: auto;
+}
+
+/* Section label ("Custom" / "Notion colors") inside the color flyout. */
+.ntn-color-section {
+	padding: 6px 6px 2px;
+	font-size: 12px;
+	color: var(--ntn-text-muted);
+	-webkit-user-select: none;
+	user-select: none;
+}
+
+/* Custom color row: the OS color dialog plus a hex field. */
+.ntn-color-custom {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 3px 6px 5px;
+}
+
+/* Doubled/parent-scoped selectors so these outrank Obsidian's own
+   `input[type="color"]` / `input[type="text"]` element rules. */
+.ntn-color-menu .ntn-color-input {
+	flex: 0 0 auto;
+	width: 20px;
+	height: 20px;
+	padding: 0;
+	border: none;
+	border-radius: 4px;
+	background: none;
+	cursor: pointer;
+	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+
+.theme-dark .ntn-color-menu .ntn-color-input {
+	box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.ntn-color-input::-webkit-color-swatch-wrapper {
+	padding: 0;
+}
+
+.ntn-color-input::-webkit-color-swatch {
+	border: none;
+	border-radius: 4px;
+}
+
+.ntn-color-menu .ntn-color-hex {
+	flex: 1;
+	min-width: 60px;
+	border: none;
+	outline: none;
+	border-radius: 4px;
+	background: var(--ntn-hover);
+	font-family: inherit;
+	font-size: 13px;
+	color: var(--ntn-text);
+	padding: 3px 6px;
+}
+
+.ntn-color-menu .ntn-color-hex.ntn-color-hex-invalid {
+	box-shadow: inset 0 0 0 1px rgb(224, 62, 62); /* Notion red */
+}
+
+.ntn-color-option {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 5px 6px;
+	border-radius: 4px;
+	cursor: pointer;
+	font-size: 13px;
+	color: var(--ntn-text);
+	text-transform: capitalize;
+	transition: background 20ms ease-in;
+}
+
+.ntn-color-option:hover {
+	background: var(--ntn-hover);
+}
+
+.ntn-color-swatch {
+	flex: 0 0 auto;
+	width: 16px;
+	height: 16px;
+	border-radius: 4px;
+	background: var(--ntn-pill-bg-light, #EBECED);
+	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.theme-dark .ntn-color-swatch {
+	background: var(--ntn-pill-bg-dark, #454B4E);
+	box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+/* ---------------- Date editor (floating calendar) ---------------- */
+
+.ntn-date-menu {
+	position: fixed;
+	z-index: var(--layer-menu, 30);
+	width: 264px;
+	box-sizing: border-box;
+	padding: 8px;
+	background: var(--background-primary);
+	border-radius: 8px;
+	box-shadow: rgba(15, 15, 15, 0.05) 0 0 0 1px,
+		rgba(15, 15, 15, 0.1) 0 3px 6px,
+		rgba(15, 15, 15, 0.2) 0 9px 24px;
+}
+
+/* The typed date (and, for datetime properties, the time selector) on top,
+   like the date text of Notion's picker. */
+.ntn-date-fields {
+	display: flex;
+	gap: 6px;
+}
+
+/* Parent-scoped to outrank Obsidian's `input[type="text"]` /
+   `input[type="time"]` element rules. */
+.ntn-date-menu .ntn-date-field,
+.ntn-date-menu .ntn-date-time {
+	box-sizing: border-box;
+	height: 30px;
+	border: none;
+	outline: none;
+	border-radius: 4px;
+	background: var(--ntn-hover);
+	font-family: inherit;
+	font-size: 14px;
+	color: var(--ntn-text);
+	padding: 5px 8px;
+}
+
+.ntn-date-menu .ntn-date-field {
+	flex: 1;
+	min-width: 0;
+}
+
+.ntn-date-menu .ntn-date-time {
+	flex: 0 0 auto;
+	width: 96px;
+}
+
+.ntn-date-menu .ntn-date-time::-webkit-calendar-picker-indicator {
+	cursor: pointer;
+	opacity: 0.5;
+}
+
+.ntn-date-menu .ntn-date-field.ntn-date-field-invalid {
+	box-shadow: inset 0 0 0 1px rgb(224, 62, 62); /* Notion red */
+}
+
+.ntn-date-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 10px 2px 6px;
+	font-size: 14px;
+	font-weight: 500;
+	-webkit-user-select: none;
+	user-select: none;
+}
+
+.ntn-date-nav {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	border-radius: 4px;
+	color: var(--ntn-text-muted);
+	cursor: pointer;
+	transition: background 20ms ease-in;
+}
+
+.ntn-date-nav:hover {
+	background: var(--ntn-hover);
+	color: var(--ntn-text);
+}
+
+.ntn-date-nav svg {
+	width: 16px;
+	height: 16px;
+}
+
+.ntn-date-grid {
+	display: grid;
+	grid-template-columns: repeat(7, 1fr);
+	gap: 2px;
+}
+
+.ntn-date-weekday {
+	padding: 2px 0 4px;
+	text-align: center;
+	font-size: 11px;
+	color: var(--ntn-text-muted);
+	-webkit-user-select: none;
+	user-select: none;
+}
+
+.ntn-date-day {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 28px;
+	border-radius: 4px;
+	font-size: 13px;
+	cursor: pointer;
+	transition: background 20ms ease-in;
+}
+
+.ntn-date-day:hover {
+	background: var(--ntn-hover);
+}
+
+/* Days that pad the grid out from the neighbouring months. */
+.ntn-date-day.ntn-date-outside {
+	color: var(--ntn-text-muted);
+}
+
+.ntn-date-day.ntn-date-today {
+	color: rgb(235, 87, 87); /* Notion red — today's marker */
+	font-weight: 600;
+}
+
+.ntn-date-day.ntn-date-selected,
+.ntn-date-day.ntn-date-selected:hover {
+	background: var(--ntn-accent);
+	color: #fff;
+}
+
+.ntn-date-actions {
+	display: flex;
+	justify-content: space-between;
+	margin-top: 8px;
+	padding-top: 8px;
+	border-top: 1px solid var(--ntn-border);
+}
+
+.ntn-date-action {
+	padding: 3px 6px;
+	border-radius: 4px;
+	font-size: 13px;
+	color: var(--ntn-text-muted);
+	cursor: pointer;
+	transition: background 20ms ease-in;
+}
+
+.ntn-date-action:hover {
+	background: var(--ntn-hover);
+	color: var(--ntn-text);
+}
+
+.ntn-checkbox {
+	appearance: auto;
+	width: 16px;
+	height: 16px;
+	margin: 0;
+	accent-color: rgb(35, 131, 226); /* Notion blue */
+	cursor: pointer;
+}
+
+.ntn-checkbox:disabled {
+	cursor: default;
+	opacity: 0.6;
+}
+
+/* ---------------- Notion-style page panel ("+ New") ---------------- */
+
+/* The panel is an Obsidian Modal, so it lives outside .ntn-root and carries
+   its own copy of the Notion text tokens (same values as .ntn-root). The
+   .modal class is doubled in so the size overrides outrank core's .modal
+   width/max-width without !important. */
+.modal.ntn-page-modal {
+	--ntn-text: rgb(55, 53, 47);
+	--ntn-text-muted: rgba(55, 53, 47, 0.65);
+	--ntn-border: rgb(233, 233, 231);
+	--ntn-hover: rgba(55, 53, 47, 0.04);
+	width: min(900px, 90vw);
+	max-width: 90vw;
+	height: min(85vh, 720px);
+	max-height: 85vh;
+	padding: 0;
+}
+
+.theme-dark .modal.ntn-page-modal {
+	--ntn-text: rgba(255, 255, 255, 0.81);
+	--ntn-text-muted: rgba(255, 255, 255, 0.443);
+	--ntn-border: rgb(47, 47, 47);
+	--ntn-hover: rgba(255, 255, 255, 0.055);
+}
+
+/* Open-in-new-tab button, sitting just left of the modal's own close X
+   (core positions the X at var(--size-2-3) with var(--size-2-2) padding —
+   the 28px offset is one icon-button width plus a small gap). */
+.ntn-page-modal .ntn-page-open-tab {
+	position: absolute;
+	top: var(--size-2-3);
+	inset-inline-end: calc(var(--size-2-3) + 28px);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--size-2-2);
+	border-radius: var(--radius-s);
+	color: var(--ntn-text-muted);
+	cursor: pointer;
+}
+
+.ntn-page-modal .ntn-page-open-tab:hover {
+	background: var(--ntn-hover);
+	color: var(--ntn-text);
+}
+
+.ntn-page-content {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	padding: 44px 72px 32px;
+	overflow-y: auto;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica,
+		Arial, sans-serif;
+}
+
+/* Title and body are chromeless inputs: the panel itself is the frame.
+   Obsidian's own input/textarea chrome (border + focus ring) outranks a
+   bare class on :hover/:focus, so every state is pinned chromeless with
+   the doubled class (see bug history #4). */
+.ntn-page-title.ntn-page-title,
+.ntn-page-body.ntn-page-body,
+.ntn-page-title.ntn-page-title:hover,
+.ntn-page-title.ntn-page-title:focus,
+.ntn-page-body.ntn-page-body:hover,
+.ntn-page-body.ntn-page-body:active,
+.ntn-page-body.ntn-page-body:focus,
+.ntn-page-body.ntn-page-body:focus-visible {
+	border: none;
+	outline: none;
+	box-shadow: none;
+	background: transparent;
+}
+
+.ntn-page-title,
+.ntn-page-body {
+	padding: 0;
+	font-family: inherit;
+	color: var(--ntn-text);
+}
+
+/* The title is a contenteditable h1; the doubled class outranks core /
+   theme heading rules inside modals (same trick as the table in reading
+   mode — see bug history #4). */
+.ntn-page-title.ntn-page-title {
+	margin: 0 0 12px;
+	font-size: 32px;
+	font-weight: 700;
+	line-height: 1.2;
+	cursor: text;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+/* contenteditable has no placeholder attribute; fake it when empty. */
+.ntn-page-title:empty::before {
+	content: attr(data-placeholder);
+	color: var(--ntn-text-muted);
+}
+
+/* flex: none — as a flex:1 item (basis 0) the textarea could be crushed to
+   zero height once the title + a long properties list already fill the
+   panel, leaving the body unreadable while editing. Height is set by
+   autoSizeBody() to fit the content; the panel itself scrolls. */
+.ntn-page-body {
+	flex: none;
+	width: 100%;
+	min-height: 280px;
+	resize: none;
+	overflow: hidden;
+	font-size: 16px;
+	line-height: 1.6;
+}
+
+.ntn-page-body::placeholder {
+	color: var(--ntn-text-muted);
+}
+
+/* Rendered-markdown view of the body (click to switch to the textarea).
+   The markdown-rendered class brings Obsidian's own heading / list / code
+   typography; the doubled class pins the base text style over it. */
+.ntn-page-preview.ntn-page-preview {
+	flex: 1;
+	cursor: text;
+	min-height: 120px;
+	padding: 0;
+	font-size: 16px;
+	line-height: 1.6;
+	color: var(--ntn-text);
+}
+
+.ntn-page-preview > :first-child {
+	margin-top: 0;
+}
+
+.ntn-page-preview-empty {
+	color: var(--ntn-text-muted);
+}
+
+/* Live Preview body editor (live-editor.ts): Obsidian's own markdown editor,
+   so headings / lists / links format in place while typing. Core sizes it
+   for a scrolling note tab (file margins, readable-width sizer, its own
+   scroller); here it flows in the panel, which does the scrolling. The
+   extra .mod-cm6 outranks core's `.markdown-source-view.mod-cm6 …` rules
+   (same doubled-class trick as bug history #4). */
+.ntn-page-editor {
+	--font-text-size: 16px;
+	--line-height-normal: 1.6;
+	position: relative;
+	flex: none;
+	min-height: 280px;
+	cursor: text;
+	color: var(--ntn-text);
+}
+
+.ntn-page-editor .markdown-source-view.mod-cm6.mod-cm6 .cm-scroller {
+	padding: 0;
+	overflow: visible;
+}
+
+.ntn-page-editor .markdown-source-view.mod-cm6.mod-cm6 .cm-sizer {
+	max-width: none;
+	margin: 0;
+	padding: 0;
+}
+
+.ntn-page-editor .markdown-source-view.mod-cm6.mod-cm6 .cm-content {
+	padding-top: 0;
+}
+
+/* CodeMirror has no placeholder without its own extension; fake it. */
+.ntn-page-editor-empty::before {
+	content: "Write something…";
+	position: absolute;
+	top: 0;
+	left: 0;
+	font-size: 16px;
+	line-height: 1.6;
+	color: var(--ntn-text-muted);
+	pointer-events: none;
+}
+
+/* Body preview and textarea swap via this class, never both visible. */
+.ntn-page-content .ntn-hidden {
+	display: none;
+}
+
+/* While the view reroutes the toolbar's New button to the page panel, the
+   core popover still gets created for an instant before being torn down —
+   this keeps it from flashing on screen. Toggled on body only during that
+   flow (see patchToolbarNew). */
+.ntn-hide-new-popover .bases-new-item-popover {
+	display: none;
+}
+
+/* ---- Property rows under the title, like Notion's page properties ---- */
+
+.ntn-page-props {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	margin-bottom: 16px;
+	padding-bottom: 12px;
+	border-bottom: 1px solid var(--ntn-border);
+}
+
+/* Notes without frontmatter get no (empty) properties section chrome. */
+.ntn-page-props:empty {
+	display: none;
+}
+
+.ntn-page-prop {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 30px;
+	font-size: 14px;
+}
+
+.ntn-page-prop-name {
+	flex: 0 0 140px;
+	color: var(--ntn-text-muted);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.ntn-page-prop-value {
+	flex: 1;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+	min-width: 0;
+	color: var(--ntn-text);
+}
+
+.ntn-page-prop-empty {
+	color: var(--ntn-text-muted);
+}
+
+/* Editable rows get Notion's hover wash; negative margin keeps the value
+   text aligned while giving the wash some breathing room. */
+.ntn-page-prop-value.ntn-page-prop-editable {
+	cursor: pointer;
+	margin-left: -6px;
+	padding: 3px 6px;
+	border-radius: 4px;
+	transition: background 20ms ease-in;
+}
+
+.ntn-page-prop-value.ntn-page-prop-editable:hover {
+	background: var(--ntn-hover);
+}
+
+/* The inline property editor reuses the table's floating-card input, but
+   sized by flex instead of a measured cell rect. */
+.ntn-input.ntn-page-prop-input {
+	flex: 1;
+	max-width: 360px;
+}
+
+/* The Notion-style Bases-toolbar restyle (blue "New" split button +
+   icon-only controls) lives in an OPTIONAL CSS snippet, not here:
+   snippets/goodbases-notion-toolbar.css. It targets Obsidian core UI
+   outside this plugin's view, so it ships as opt-in rather than being
+   injected document-wide. See the README ("Optional: Notion-style
+   toolbar"). */

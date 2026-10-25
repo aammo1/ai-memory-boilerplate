@@ -18,7 +18,7 @@ Infer from the repository when available:
 
 Automatically choose the number, order, composition, and placement of sections. Default to the smallest useful set, often 1–3 sections; this is not a fixed cap. Do not turn every strategy into a complete sales page or duplicate information already well covered. Explicit user placement or section-count instructions take precedence.
 
-Proceed without an approval loop when the target and essential information are clear. Ask a focused question only for a real blocker: ambiguous target product, missing strategy with no actionable angle, or a critical fact/asset that cannot be recovered. If a desired proof section lacks evidence, select a useful factual demonstration instead when the strategy permits it; do not invent proof or stop all independent work.
+Proceed without an approval loop when the target and essential information are clear, **unless** project or memory-vault instructions (e.g. an `AGENTS.md` rule such as "double-confirm before any source-code edit") require confirmation: those rules take precedence, so state the planned sections, files and insertion point in one short message and wait for explicit approval before editing. Ask a focused question only for a real blocker: ambiguous target product, missing strategy with no actionable angle, or a critical fact/asset that cannot be recovered. If a desired proof section lacks evidence, select a useful factual demonstration instead when the strategy permits it; do not invent proof or stop all independent work.
 
 Use the page's language unless the user specifies another. Treat the user's wording “desktop vue/view” as viewport design, not a request to migrate the app to Vue.
 

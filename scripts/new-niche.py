@@ -163,7 +163,12 @@ def store_column_values(
     pics_dir: Path,
     catalog_env_path: Path,
     live_url: str,
+    prod_env_path: Path | None = None,
 ) -> dict[str, str]:
+    if prod_env_path is not None and prod_env_path.is_file():
+        prod_value = f"`{prod_env_path}`"
+    else:
+        prod_value = f"`{catalog_env_path.parent / 'catalog-agent.prod.env'}` (after deployment)"
     return {
         "**Store Code Repository**": f"`{repo_dir}`",
         "**Marketing Plans (`01 Products`)**": f"`01 Products/{store}/<product>.md`",
@@ -175,6 +180,7 @@ def store_column_values(
         "**Hero `01` Reference Image**": f"`{memory_dir}/03 Assets/Reference Heroes/{store}_hero_01.png`",
         "**Hero `01` Live Style URL**": f"`{live_url}`",
         "**Catalog API Env**": f"`{catalog_env_path}`",
+        "**Catalog API Env (Production)**": prod_value,
         "**Kie.ai Image Generator**": f"`{memory_dir}/tools/kie_generate.py` (env: `~/.config/kie/kie.env`)",
     }
 
@@ -187,14 +193,15 @@ def upsert_profile_store_column(
     pics_dir: Path,
     catalog_env_path: Path,
     live_url: str,
+    prod_env_path: Path | None = None,
 ) -> None:
     if not profile_path.is_file():
         return
     text = profile_path.read_text(encoding="utf-8")
-    col_vals = store_column_values(store, memory_dir, repo_dir, pics_dir, catalog_env_path, live_url)
+    col_vals = store_column_values(store, memory_dir, repo_dir, pics_dir, catalog_env_path, live_url, prod_env_path)
     col_header = f"`{store}`"
 
-    lines = text.splitlines()
+    lines = add_missing_profile_rows(text.splitlines(), list(col_vals.keys()))
     header_idx = next((i for i, l in enumerate(lines) if l.strip().startswith("| Resource |")), None)
     if header_idx is None:
         return
@@ -254,6 +261,47 @@ def upsert_profile_store_column(
         )
 
     profile_path.write_text(updated, encoding="utf-8")
+
+
+def add_missing_profile_rows(lines: list[str], row_keys: list[str]) -> list[str]:
+    """Insert rows added in newer versions (e.g. production catalog env) into older PROFILE.md tables."""
+    header_idx = next((i for i, l in enumerate(lines) if l.strip().startswith("| Resource |")), None)
+    if header_idx is None:
+        return lines
+    n_cols = len([c for c in lines[header_idx].strip().strip("|").split("|")])
+    table_end = header_idx + 1
+    while table_end < len(lines) and lines[table_end].strip().startswith("|"):
+        table_end += 1
+    existing = {
+        l.strip().strip("|").split("|")[0].strip()
+        for l in lines[header_idx + 2:table_end]
+    }
+    result = list(lines)
+    for idx, key in enumerate(row_keys):
+        if key in existing:
+            continue
+        # Place the new row after the closest preceding row that already exists.
+        insert_at = table_end
+        for prev in reversed(row_keys[:idx]):
+            pos = next(
+                (i for i in range(header_idx + 2, table_end) if result[i].strip().startswith(f"| {prev} |")),
+                None,
+            )
+            if pos is not None:
+                insert_at = pos + 1
+                break
+        result.insert(insert_at, "| " + " | ".join([key] + ["`-`"] * (n_cols - 1)) + " |")
+        existing.add(key)
+        table_end += 1
+    return result
+
+
+def read_store_config_slug(repo_dir: Path) -> str:
+    cfg = repo_dir / "store.config.ts"
+    if not cfg.is_file():
+        return ""
+    m = re.search(r'^\s*slug:\s*"([^"]+)"', cfg.read_text(encoding="utf-8", errors="ignore"), re.MULTILINE)
+    return m.group(1) if m else ""
 
 
 def clone_store_boilerplate(template_src: str, repo_dir: Path) -> None:
@@ -392,6 +440,7 @@ def main() -> int:
     config_dir = Path(args.config_dir).expanduser().resolve()
     skills_dir = Path(args.skills_dir).expanduser().resolve()
     catalog_env_path = config_dir / store / "catalog-agent.env"
+    prod_env_path = config_dir / store / "catalog-agent.prod.env"
 
     # Step 1: Ensure Unified Vault & 4 Skills exist (Brand-new user vs. Existing user)
     setup_script = Path(__file__).resolve().parent / "setup.py"
@@ -446,19 +495,25 @@ def main() -> int:
         if not args.skip_npm:
             print(f"Running `npm install` in {repo_dir} ...")
             subprocess.run(["npm", "install"], cwd=str(repo_dir), check=True)
-            new_store_cmd = ["npm", "run", "new-store"]
+            # --slug keeps the store's own slug identical to the vault/config folder name.
+            new_store_cmd = ["npm", "run", "new-store", "--", "--slug", store]
             if args.answers:
                 answers_path = str(Path(args.answers).expanduser().resolve())
-                new_store_cmd.extend(["--", "--answers", answers_path])
+                new_store_cmd.extend(["--answers", answers_path])
             print(f"Running `{' '.join(new_store_cmd)}` in {repo_dir} ...")
             subprocess.run(new_store_cmd, cwd=str(repo_dir), check=True)
 
+        repo_slug = read_store_config_slug(repo_dir)
+        if repo_slug and repo_slug != store:
+            print(
+                f"WARNING:       {repo_dir}/store.config.ts uses slug '{repo_slug}' but the vault uses '{store}'. "
+                f"Edit store.config.ts (slug) or re-run `npm run new-store -- --slug {store} --force` so both match."
+            )
         url, key = extract_or_create_catalog_env(repo_dir)
         prod_url, prod_key = extract_prod_catalog_env(repo_dir)
         live_url = prod_url if prod_url.startswith("https://") else url
         write_catalog_env_file(catalog_env_path, url, key)
         if prod_url.startswith("https://") and len(prod_key) >= 32:
-            prod_env_path = config_dir / store / "catalog-agent.prod.env"
             write_catalog_env_file(prod_env_path, prod_url, prod_key)
         connect_repo_agents_md(repo_dir, memory_dir)
 
@@ -472,6 +527,7 @@ def main() -> int:
         pics_dir,
         catalog_env_path,
         live_url,
+        prod_env_path,
     )
     print(f"UPDATED:       {memory_dir / 'PROFILE.md'}")
 
@@ -481,7 +537,11 @@ def main() -> int:
     print(f"  - Product Pictures Folder:  {pics_dir}/ (staging/ & uploaded/)")
     if not args.no_store_repo:
         print(f"  - Store + CRM Code Repo:    {repo_dir}")
-        print(f"  - Catalog API Secret Env:   {catalog_env_path}")
+        print(f"  - Catalog API Env (local):  {catalog_env_path}  -> CRM_CATALOG_URL on this computer")
+        if prod_env_path.is_file():
+            print(f"  - Catalog API Env (live):   {prod_env_path}  -> your deployed store")
+        else:
+            print("  - Catalog API Env (live):   not created yet (needs an https:// domain in .env.production.example)")
     return 0
 
 

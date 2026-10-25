@@ -12,7 +12,11 @@ description: >-
 
 # Store CRM Live Catalog (Contract v2)
 
-This skill is installed globally at `~/.agents/skills/crm-catalog/`. Use its standalone `$HOME/.agents/skills/crm-catalog/scripts/catalog-agent-client.mjs` with Node.js 22+ from any working directory. It connects to any `store-crm-boilerplate` `/api/catalog-agent` endpoint (Contract v2); catalog changes take effect immediately and trigger `revalidateStorefront()` without a rebuild. Read `references/setup.md` if credentials or the API are unavailable, and `references/contract.md` when constructing requests.
+This skill ships a standalone client at `scripts/catalog-agent-client.mjs` **inside this skill's own folder** (default install: `$HOME/.agents/skills/crm-catalog/`; it may also be reached through a harness symlink such as `~/.claude/skills/crm-catalog/`). Resolve that absolute path once and call it `CLIENT` below. It runs with Node.js 22+ from any working directory and connects to any `store-crm-boilerplate` `/api/catalog-agent` endpoint (Contract v2); catalog changes take effect immediately and trigger `revalidateStorefront()` without a rebuild. Read `references/setup.md` if credentials or the API are unavailable, and `references/contract.md` when constructing requests.
+
+```bash
+CLIENT="$HOME/.agents/skills/crm-catalog/scripts/catalog-agent-client.mjs"   # adjust if this skill lives elsewhere
+```
 
 ## Boundaries
 
@@ -25,23 +29,36 @@ This skill is installed globally at `~/.agents/skills/crm-catalog/`. Use its sta
 ## Workflow
 
 Track these steps for each request:
+- [ ] Choose the target store **and** environment (local or live) and confirm its origin.
 - [ ] Discover live capabilities and identify the exact product (if editing/archiving).
 - [ ] Gather missing facts and prepare copy, option axes, variants, and photos.
 - [ ] Create a signed preview and explain the exact changes.
 - [ ] Obtain the user's explicit approval of that specific preview.
 - [ ] Apply, then verify and summarize the saved receipt and live product.
 
+### 0. Choose the target environment (local vs. live)
+
+Each store usually has two env files (paths listed in `PROFILE.md`):
+
+| Env file | `CRM_CATALOG_URL` | Use for |
+|---|---|---|
+| `~/.config/<store>/catalog-agent.env` | `http://localhost:3000` | The copy running on this computer (`npm run dev`) |
+| `~/.config/<store>/catalog-agent.prod.env` | `https://<store-domain>` | The deployed store that customers see |
+
+- If both files exist and the user did not say which one, **ask "local or live store?"** before anything else. Never default silently: products created locally do not appear on the live site.
+- If only the local file exists and the user wants the live store, stop and point them to `references/setup.md` §2 to create `catalog-agent.prod.env`.
+- Read the chosen file's `CRM_CATALOG_URL` (never print the key) and state the target origin to the user. Set `ENV_FILE` to that path for every command below.
+- A plan is bound to its origin: a preview prepared against local cannot be applied to live. Prepare a new preview for the other environment.
+
 ### 1. Discover
 
-Identify the target store's env file from `PROFILE.md` (convention: `~/.config/<store>/catalog-agent.env` containing `CRM_CATALOG_URL` and `CRM_CATALOG_KEY`):
-
 ```bash
-node --env-file="$HOME/.config/<store>/catalog-agent.env" "$HOME/.agents/skills/crm-catalog/scripts/catalog-agent-client.mjs" capabilities
-node --env-file="$HOME/.config/<store>/catalog-agent.env" "$HOME/.agents/skills/crm-catalog/scripts/catalog-agent-client.mjs" list
-node --env-file="$HOME/.config/<store>/catalog-agent.env" "$HOME/.agents/skills/crm-catalog/scripts/catalog-agent-client.mjs" show <exact-id-or-slug>
+node --env-file="$ENV_FILE" "$CLIENT" capabilities
+node --env-file="$ENV_FILE" "$CLIENT" list
+node --env-file="$ENV_FILE" "$CLIENT" show <exact-id-or-slug>
 ```
 
-Always check live `capabilities` (`schemaVersion: 2`) and current product state before drafting an operation.
+Always check live `capabilities` (`schemaVersion: 2`) and current product state before drafting an operation. "Network request failed" against `http://localhost:3000` usually means the local dev server is not running.
 
 ### 2. Gather and prepare
 
@@ -58,25 +75,30 @@ Always check live `capabilities` (`schemaVersion: 2`) and current product state 
 
 **Photos:**
 - Accept JPG/PNG/WebP local files or HTTPS image URLs (up to 5 MB). Never include `ads_folder/` images in product or variant galleries.
+- **Always write local photos as absolute paths** (e.g. `/home/me/Pictures/<store>_pics/staging/<product>/standard/01.png`). The client resolves relative paths against the folder of `operation.json`, not your working directory, so `./staging/...` breaks as soon as the JSON lives in a temp folder.
 - Product-level images go in `data.images`; variant-specific galleries go in `data.variants[].images`.
 - The client stages sources locally and computes dry-run WebP paths during `preview`; actual media uploads happen only during `apply`.
 
 ### 3. Preview and approve
 
-Write operation JSON and plans outside the repo (e.g. `/tmp/opencode/`):
+Write operation JSON and plans to a private temp folder outside any repo (works on every harness and OS):
 
 ```bash
-node --env-file="$HOME/.config/<store>/catalog-agent.env" "$HOME/.agents/skills/crm-catalog/scripts/catalog-agent-client.mjs" preview /tmp/opencode/operation.json /tmp/opencode/plan.json
+WORK="$(mktemp -d "${TMPDIR:-/tmp}/crm-catalog.XXXXXX")"
+# write "$WORK/operation.json" (absolute image paths), then:
+node --env-file="$ENV_FILE" "$CLIENT" preview "$WORK/operation.json" "$WORK/plan.json"
 ```
 
-Present the store origin, action, product name/slug, category, price, option definitions, variants, image galleries, initial stock per `variantKey`, and preview expiration (30 minutes). Wait for explicit user approval before running `apply`.
+Keep `$WORK` until `apply` finishes: `plan.json.images/` holds the SHA-256-checked photo copies.
+
+Present the **target origin (local or live URL)**, action, product name/slug, category, price, option definitions, variants, image galleries, initial stock per `variantKey`, and preview expiration (30 minutes). Wait for explicit user approval before running `apply`.
 
 ### 4. Apply and verify
 
-Only after explicit user approval:
+Only after explicit user approval, and after restating the target origin one last time:
 
 ```bash
-node --env-file="$HOME/.config/<store>/catalog-agent.env" "$HOME/.agents/skills/crm-catalog/scripts/catalog-agent-client.mjs" apply /tmp/opencode/plan.json --yes
+node --env-file="$ENV_FILE" "$CLIENT" apply "$WORK/plan.json" --yes
 ```
 
-Compare the applied receipt (`variantIds` map, product ID, slug) with the current product returned by `apply`. If a request times out, check `receipt <requestId>` before retrying the same plan.
+Compare the applied receipt (`variantIds` map, product ID, slug) with the current product returned by `apply`. If a request times out, check `node --env-file="$ENV_FILE" "$CLIENT" receipt <requestId>` before retrying the same plan. Report which environment was changed and the product URL on that origin (`<origin>/produit/<slug>`).

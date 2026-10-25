@@ -35,6 +35,7 @@ HARNESS_SKILL_LOCATIONS = [
     (".claude", "skills"),
     (".codex", "skills"),
     (".gemini/config", "skills"),
+    (".gemini/antigravity-cli", "skills"),
     (".cursor", "skills"),
 ]
 
@@ -166,6 +167,7 @@ def store_column_values(store: str, memory_dir: Path) -> dict[str, str]:
         "**Hero `01` Reference Image**": f"`{memory_dir}/03 Assets/Reference Heroes/{store}_hero_01.png`",
         "**Hero `01` Live Style URL**": f"`https://{store}.example.com`",
         "**Catalog API Env**": f"`~/.config/{store}/catalog-agent.env`",
+        "**Catalog API Env (Production)**": f"`~/.config/{store}/catalog-agent.prod.env` (after deployment)",
         "**Kie.ai Image Generator**": f"`{memory_dir}/tools/kie_generate.py` (env: `~/.config/kie/kie.env`)",
     }
 
@@ -361,7 +363,10 @@ def sync_harness_symlinks(
                 link_path.symlink_to(src_dir)
                 results.append(f"UPDATED LINK:  {link_path} -> {src_dir}")
             elif link_path.exists():
-                results.append(f"SKIP (dir):    {link_path}")
+                results.append(
+                    f"WARNING:       {link_path} is a real folder, not a link to {src_dir}. "
+                    "It will NOT receive updates. Move it away and re-run with --update-skills to link it."
+                )
             else:
                 if dry_run:
                     results.append(f"WOULD LINK:    {link_path} -> {src_dir}")
@@ -379,6 +384,7 @@ def install_bundled_skills(
     dry_run: bool,
     harness_home: Path | None,
 ) -> None:
+    replacements = {**replacements, "SKILLS_DIR": str(skills_root)}
     skill_dest = skills_root / "ai-memory-kit/SKILL.md"
     print(write_safe(skill_dest, render(SKILL_TEMPLATE, replacements), force, dry_run))
     for static_skill in BUNDLED_STATIC_SKILLS:
@@ -420,11 +426,11 @@ def main() -> int:
     parser.add_argument(
         "--update-skills",
         action="store_true",
-        help="Refresh only the 4 bundled skills (and detected AI harness symlinks) without modifying existing vault notes",
+        help="Refresh only the 4 bundled skills (and detected AI harness symlinks) without modifying existing vault notes. Overwrites local edits to installed skill files.",
     )
     parser.add_argument("--skills-dir", default=str(Path.home() / ".agents/skills"), help="Base skills directory (default: ~/.agents/skills)")
     parser.add_argument("--harness-home", help="Optional home directory to scan for AI harness skill folders (defaults to ~ when using default --skills-dir)")
-    parser.add_argument("--no-harness-sync", action="store_true", help="Do not create skill symlinks in ~/.claude, ~/.codex, ~/.gemini/config, or ~/.cursor")
+    parser.add_argument("--no-harness-sync", action="store_true", help="Do not create skill symlinks in ~/.claude, ~/.codex, ~/.gemini/config, ~/.gemini/antigravity-cli, or ~/.cursor")
     parser.add_argument("--force", action="store_true", help="Overwrite existing files")
     parser.add_argument("--dry-run", action="store_true", help="Preview actions without writing to disk")
     args = parser.parse_args()
@@ -452,6 +458,8 @@ def main() -> int:
             "FIRST_STORE": first_store,
         }
         print(f"=== Refreshing 4 Bundled Skills in: {skills_root} ===")
+        print("WARNING: --update-skills overwrites the installed skill files. Local edits made inside")
+        print(f"         {skills_root}/<skill>/ are replaced; keep custom changes in this repo's skill/ folder instead.")
         install_bundled_skills(skills_root, replacements, True, args.dry_run, harness_home)
         print("\nDone! All 4 skills refreshed without modifying vault notes.")
         return 0
@@ -564,7 +572,7 @@ def main() -> int:
         )
     )
     good_bases_src = TEMPLATES_DIR / "obsidian/plugins/good-bases"
-    for plugin_file in ["manifest.json", "main.js", "styles.css"]:
+    for plugin_file in ["manifest.json", "main.js", "styles.css", "LICENSE"]:
         print(
             copy_safe(
                 good_bases_src / plugin_file,

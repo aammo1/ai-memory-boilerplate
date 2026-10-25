@@ -77,10 +77,10 @@ Show the user the generated gallery images and `ads_folder/` visuals + `ad-copy.
 ---
 
 ## Step 8 — Live Catalog Creation (`crm-catalog`)
-1. Verify `"step7_approved": true` and confirm the store's catalog API origin matches `PROFILE.md` (`~/.agents/skills/crm-catalog/SKILL.md` with `~/.config/<store>/catalog-agent.env`).
-2. Upload **only** the product/variant gallery folders (e.g., `standard/` or each variant folder) with constraint: **"dont touch the ads_folder"**.
+1. Verify `"step7_approved": true`. Ask whether this upload targets the **local** store (`Catalog API Env` in `PROFILE.md`, `http://localhost:3000`) or the **live** store (`Catalog API Env (Production)`, the deployed `https://` domain); never default silently to local once the store is deployed. Use the `crm-catalog` skill with that env file and state the target origin before preview and before apply.
+2. Upload **only** the product/variant gallery folders (e.g., `standard/` or each variant folder) with constraint: **"dont touch the ads_folder"**. Reference photos by **absolute path** (`<store_pictures_folder>/staging/<product_name>/<variant>/01.png`) in the operation JSON.
    - For single-SKU / optionless products on `crm-catalog`, use `variants: [{ "key": "standard", "options": [] }]` and `initialStock: [{ "variantKey": "standard", "qty": <n> }]`.
-3. Follow `preview` -> user approval -> `apply`. Save request ID, receipt, product ID, slug, and live URL in `launch-state.json`.
+3. Follow `preview` -> user approval -> `apply`. Save the target origin (local/live), request ID, receipt, product ID, slug, and product URL in `launch-state.json`.
 4. Move the product folder from `staging/<product_name>` to `uploaded/<product_name>` and update `product_dir` in `launch-state.json` and `TODO.md`.
 
 ---

@@ -242,14 +242,46 @@ class UnifiedVaultTests(unittest.TestCase):
         self.assertIn(str(projects_dir / "glow-skin"), profile_text)
         self.assertIn("`https://prod.example.ma`", profile_text)
         self.assertIn(str(projects_dir / "car-gadgets"), profile_text)
+        self.assertIn("| **Catalog API Env (Production)** |", profile_text)
+        self.assertIn(f"`{prod_env_path}`", profile_text)
+
+        # 3. Older PROFILE.md without the production row gets it inserted after `Catalog API Env`
+        profile_path = self.vault / "PROFILE.md"
+        legacy = "\n".join(
+            l for l in profile_text.splitlines() if not l.startswith("| **Catalog API Env (Production)** |")
+        ) + "\n"
+        profile_path.write_text(legacy, encoding="utf-8")
+        res3 = run_cli(
+            vault_new_niche,
+            "--store",
+            "glow-skin",
+            "--memory-dir",
+            str(self.vault),
+            "--projects-dir",
+            str(projects_dir),
+            "--pictures-dir",
+            str(pictures_dir),
+            "--config-dir",
+            str(config_dir),
+            "--store-template",
+            str(fake_template),
+            "--skip-npm",
+        )
+        self.assertEqual(res3.returncode, 0, msg=res3.stderr or res3.stdout)
+        rows = [l for l in profile_path.read_text(encoding="utf-8").splitlines() if l.startswith("| **Catalog API Env")]
+        self.assertEqual(len(rows), 2, msg=rows)
+        self.assertTrue(rows[1].startswith("| **Catalog API Env (Production)** |"))
+        self.assertIn(f"`{prod_env_path}`", rows[1])
 
         verify_res = run_cli(VERIFY_SCRIPT, "--memory-dir", str(self.vault))
         self.assertEqual(verify_res.returncode, 0, msg=verify_res.stdout)
 
     def test_slug_normalization_harness_symlinks_and_update_skills(self):
         harness_home = self.root / "fake-home"
-        for sub in [".claude", ".codex", ".gemini/config", ".cursor"]:
+        for sub in [".claude", ".codex", ".gemini/config", ".gemini/antigravity-cli", ".cursor"]:
             (harness_home / sub).mkdir(parents=True)
+        # A pre-existing real skill folder must be reported, not silently skipped
+        (harness_home / ".cursor/skills/crm-catalog").mkdir(parents=True)
 
         # Underscores & uppercase normalize cleanly to hyphenated lowercase; 1-char slug fails
         bad = run_cli(SETUP_SCRIPT, "--memory-dir", str(self.vault), "--stores", "x")
@@ -271,10 +303,18 @@ class UnifiedVaultTests(unittest.TestCase):
         )
         self.assertEqual(ok.returncode, 0, msg=ok.stderr or ok.stdout)
         self.assertTrue((self.vault / "01 Products/my-brand").is_dir())
+        self.assertIn("WARNING:", ok.stdout)
+        self.assertIn(str(harness_home / ".cursor/skills/crm-catalog"), ok.stdout)
+        kit = (self.skills / "ai-memory-kit/SKILL.md").read_text(encoding="utf-8")
+        self.assertNotIn("{{SKILLS_DIR}}", kit)
+        self.assertIn(f"{self.skills.resolve()}/crm-catalog/SKILL.md", kit)
 
-        for sub in [".claude/skills", ".codex/skills", ".gemini/config/skills", ".cursor/skills"]:
+        for sub in [".claude/skills", ".codex/skills", ".gemini/config/skills", ".gemini/antigravity-cli/skills", ".cursor/skills"]:
             for skill_name in ["ai-memory-kit", "morocco-cod-marketing", "crm-catalog", "product-page-marketing-sections"]:
                 link = harness_home / sub / skill_name
+                if sub == ".cursor/skills" and skill_name == "crm-catalog":
+                    self.assertFalse(link.is_symlink())
+                    continue
                 self.assertTrue(link.is_symlink(), msg=f"Missing symlink: {link}")
                 self.assertEqual(link.resolve(), (self.skills / skill_name).resolve())
 
@@ -295,6 +335,7 @@ class UnifiedVaultTests(unittest.TestCase):
             "--update-skills",
         )
         self.assertEqual(upd.returncode, 0, msg=upd.stderr or upd.stdout)
+        self.assertIn("overwrites the installed skill files", upd.stdout)
         self.assertEqual(todo_path.read_text(encoding="utf-8"), "# Custom User Todo\n")
         self.assertIn("Store CRM Live Catalog", crm_skill.read_text(encoding="utf-8"))
 

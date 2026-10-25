@@ -52,7 +52,7 @@ When the user asks to add or create a new store/niche (`<store_slug>`):
   This script automatically:
   1. Creates `{{MEMORY_DIR}}/01 Products/<store_slug>/`, `{{MEMORY_DIR}}/02 Bases/<store_slug>_Marketing.base`, and updates `02 Bases/Products_Marketing.base`.
   2. Creates `~/Pictures/<store_slug>_pics/staging/` and `uploaded/`.
-  3. Clones `store-crm-boilerplate` into `~/Projects/<store_slug>`, runs `npm install` & `npm run new-store`, extracts `CATALOG_AGENT_KEY` into `~/.config/<store_slug>/catalog-agent.env` (`chmod 600`), and links `~/Projects/<store_slug>/AGENTS.md` to `{{MEMORY_DIR}}`.
+  3. Clones `store-crm-boilerplate` into `~/Projects/<store_slug>`, runs `npm install` & `npm run new-store`, extracts `CATALOG_AGENT_KEY` into `~/.config/<store_slug>/catalog-agent.env` (local) and `catalog-agent.prod.env` (live, when an `https://` domain is set) (`chmod 600`), and links `~/Projects/<store_slug>/AGENTS.md` to `{{MEMORY_DIR}}`.
   4. Updates `{{MEMORY_DIR}}/PROFILE.md` with the real paths.
 - **Option B — Manual Vault-Only Registration:**
   1. Create directory `{{MEMORY_DIR}}/01 Products/<store_slug>/`.
@@ -65,9 +65,9 @@ If the user wants to adapt the vault for a new industry or niche, add or edit th
 
 ### 4. Run the Product Launch Pipeline (Steps 0 to 10)
 Execute `{{MEMORY_DIR}}/LAUNCH-PIPELINE.md` for any store in `PROFILE.md`, tracking per-product state in `<product_dir>/launch-state.json` and generating gallery/ad visuals with `{{MEMORY_DIR}}/tools/kie_generate.py`:
-- **Steps 1 & 2 (Marketing Plan):** Use `~/.agents/skills/morocco-cod-marketing/SKILL.md` (when installed) targeting `{{MEMORY_DIR}}/01 Products/<store>/<product_name>.md`.
-- **Step 8 (Live Catalog):** Use `~/.agents/skills/crm-catalog/SKILL.md` with the store's `~/.config/<store>/catalog-agent.env`.
-- **Step 9 (Product Page Sections):** Use `~/.agents/skills/product-page-marketing-sections/SKILL.md` in the store's code repository (`src/custom/`).
+- **Steps 1 & 2 (Marketing Plan):** Use `{{SKILLS_DIR}}/morocco-cod-marketing/SKILL.md` (when installed) targeting `{{MEMORY_DIR}}/01 Products/<store>/<product_name>.md`.
+- **Step 8 (Live Catalog):** Use `{{SKILLS_DIR}}/crm-catalog/SKILL.md`. Ask whether the target is the **local** store (`~/.config/<store>/catalog-agent.env`, `http://localhost:3000`) or the **live** store (`~/.config/<store>/catalog-agent.prod.env`, the deployed `https://` domain), as listed in `PROFILE.md`. Never default silently to local once the store is deployed.
+- **Step 9 (Product Page Sections):** Use `{{SKILLS_DIR}}/product-page-marketing-sections/SKILL.md` in the store's code repository (`src/custom/`).
 
 ### 5. Orient, Recall, and Log Tasks
 - Answer questions using verified facts from `PROFILE.md`, `TODO.md`, `01 Products/`, or a product's `launch-state.json`.

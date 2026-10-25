@@ -73,10 +73,13 @@ python3 scripts/new-niche.py \
 ```
 
 What `new-niche.py` does automatically:
-1. **If `~/Work/ai-memory` does not exist yet:** Runs `setup.py` to initialize the unified Obsidian vault, installs all 4 skills (`ai-memory-kit`, `morocco-cod-marketing`, `crm-catalog`, `product-page-marketing-sections`) into `~/.agents/skills/`, and **auto-symlinks** them into any detected AI harness on your machine (`~/.claude/skills`, `~/.codex/skills`, `~/.gemini/config/skills` for Antigravity, `~/.cursor/skills`).
+1. **If `~/Work/ai-memory` does not exist yet:** Runs `setup.py` to initialize the unified Obsidian vault, installs all 4 skills (`ai-memory-kit`, `morocco-cod-marketing`, `crm-catalog`, `product-page-marketing-sections`) into `~/.agents/skills/`, and **auto-symlinks** them into any detected AI harness on your machine (`~/.claude/skills`, `~/.codex/skills`, `~/.gemini/config/skills` for the Antigravity app/IDE, `~/.gemini/antigravity-cli/skills` for the Antigravity CLI, `~/.cursor/skills`). OpenCode and Gemini CLI read `~/.agents/skills` directly.
 2. **Creates Product Pictures folders:** `~/Pictures/glow-skin_pics/staging/` and `uploaded/`.
-3. **Clones & configures [`store-crm-boilerplate`](https://github.com/aammo1/store-crm-boilerplate):** Clones into `~/Projects/glow-skin`, runs `npm install` + `npm run new-store` (sharing `CATALOG_AGENT_KEY` across `.env.local` and `.env.production.example`), writes `~/.config/glow-skin/catalog-agent.env` + `catalog-agent.prod.env` (`chmod 600`), and links `~/Projects/glow-skin/AGENTS.md` to your vault.
-4. **Wires real paths in `PROFILE.md`:** Updates `~/Work/ai-memory/PROFILE.md` with your real repository, production URL, pictures, and catalog env paths.
+3. **Clones & configures [`store-crm-boilerplate`](https://github.com/aammo1/store-crm-boilerplate):** Clones into `~/Projects/glow-skin`, runs `npm install` + `npm run new-store -- --slug glow-skin` (so the store slug always matches the vault folder name), writes `~/.config/glow-skin/catalog-agent.env` (**local** store, `http://localhost:3000`) and, when your domain is `https://`, `catalog-agent.prod.env` (**live** store) (`chmod 600`), and links `~/Projects/glow-skin/AGENTS.md` to your vault.
+   - With `--answers <file>`, leave `adminPassword` empty to get a random admin password printed once.
+4. **Wires real paths in `PROFILE.md`:** Updates `~/Work/ai-memory/PROFILE.md` with your real repository, production URL, pictures, and both catalog env paths (`Catalog API Env` = local, `Catalog API Env (Production)` = live). Older vaults get the new production row added automatically.
+
+> **Local vs. live catalog:** products created with `catalog-agent.env` only exist on your computer's copy of the store. After deploying, tell your AI to use the **live** store; the `crm-catalog` skill always asks which one and shows the target URL before applying.
 
 ---
 
@@ -100,11 +103,12 @@ What `setup.py` does:
   - `.obsidian/` settings so Obsidian **Bases** and **Templates** work out of the box
 - Copies `tools/kie_generate.py`, `tools/test_kie_generate.py`, and `scripts/new-niche.py` into `<vault>/tools/` (never overwrites existing files unless `--force` is passed).
 - Initializes a Git repository inside `$HOME/Work/ai-memory`.
-- Installs all 4 bundled skills (`ai-memory-kit`, `morocco-cod-marketing`, `crm-catalog`, `product-page-marketing-sections`) into `~/.agents/skills/` and auto-symlinks detected AI harnesses (`~/.claude/skills`, `~/.codex/skills`, `~/.gemini/config/skills`, `~/.cursor/skills`).
+- Installs all 4 bundled skills (`ai-memory-kit`, `morocco-cod-marketing`, `crm-catalog`, `product-page-marketing-sections`) into `~/.agents/skills/` and auto-symlinks detected AI harnesses (`~/.claude/skills`, `~/.codex/skills`, `~/.gemini/config/skills`, `~/.gemini/antigravity-cli/skills`, `~/.cursor/skills`). If a harness already has a **real folder** with the same skill name, the installer prints a `WARNING` and leaves it alone: that copy will not receive updates until you move it away and re-run with `--update-skills`.
 - After pulling updates to this repo, refresh installed skills anytime without touching your vault notes:
   ```bash
   python3 scripts/setup.py --memory-dir "$HOME/Work/ai-memory" --update-skills
   ```
+  > ⚠️ `--update-skills` **overwrites** the installed skill files in `~/.agents/skills/<skill>/`. Make lasting customizations in this repo's `skill/` folder (or your fork), not in the installed copy.
 
 ### Adding a New Store or Niche Later (Via the Skill)
 
@@ -198,3 +202,5 @@ ai-memory-boilerplate/
 ## License
 
 MIT License — free for personal and commercial use.
+
+Bundled third-party component: [GoodBases](https://github.com/FrancescoUmberto/GoodBases) Obsidian plugin (`templates/obsidian/plugins/good-bases/`), MIT License, Copyright (c) 2026 Umberto Francesco Carolini. See `templates/obsidian/plugins/good-bases/LICENSE`.

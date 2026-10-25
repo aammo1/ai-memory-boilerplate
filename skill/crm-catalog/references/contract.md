@@ -6,6 +6,10 @@
 - `list` returns all active and archived products with their `optionDefinitions`, `variants`, galleries, and availability.
 - `show <id-or-slug>` returns one exact product.
 
+## Image paths
+
+Use **absolute paths** for local photos (as in the examples below), HTTPS URLs, or existing `/api/media/...` / `/images/...` paths. Relative paths are resolved against the folder containing `operation.json`, not the current working directory.
+
 ## 1. Create (`command: "create"`)
 
 ### Optionless / Single-SKU Product (e.g., Gadget, Supplement, Book)
@@ -28,7 +32,7 @@
     "packs": [
       { "quantity": 2, "price": 449, "label": "Pack Duo", "highlight": true }
     ],
-    "images": ["./staging/DIFFUSEUR/standard/01.png", "./staging/DIFFUSEUR/standard/02.png"],
+    "images": ["/home/me/Pictures/maison_pics/staging/DIFFUSEUR/standard/01.png", "/home/me/Pictures/maison_pics/staging/DIFFUSEUR/standard/02.png"],
     "variants": [
       { "key": "standard", "options": [] }
     ],
@@ -51,7 +55,7 @@
     "category": "soins",
     "price": 199,
     "description": "Soin quotidien visage.",
-    "images": ["./staging/SERUM/30ml/01.png"],
+    "images": ["/home/me/Pictures/glow-skin_pics/staging/SERUM/30ml/01.png"],
     "optionDefinitions": [
       { "name": "Contenance", "values": ["30 ml", "50 ml"] }
     ],
@@ -59,12 +63,12 @@
       {
         "key": "30ml",
         "options": [{ "name": "Contenance", "value": "30 ml" }],
-        "images": ["./staging/SERUM/30ml/01.png", "./staging/SERUM/30ml/02.png"]
+        "images": ["/home/me/Pictures/glow-skin_pics/staging/SERUM/30ml/01.png", "/home/me/Pictures/glow-skin_pics/staging/SERUM/30ml/02.png"]
       },
       {
         "key": "50ml",
         "options": [{ "name": "Contenance", "value": "50 ml" }],
-        "images": ["./staging/SERUM/50ml/01.png"]
+        "images": ["/home/me/Pictures/glow-skin_pics/staging/SERUM/50ml/01.png"]
       }
     ],
     "initialStock": [

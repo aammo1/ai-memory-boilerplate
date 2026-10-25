@@ -323,6 +323,8 @@ class UnifiedVaultTests(unittest.TestCase):
         todo_path.write_text("# Custom User Todo\n", encoding="utf-8")
         crm_skill = self.skills / "crm-catalog/SKILL.md"
         crm_skill.write_text("stale content", encoding="utf-8")
+        vault_tool = self.vault / "tools/new-niche.py"
+        vault_tool.write_text("# old launcher\n", encoding="utf-8")
 
         upd = run_cli(
             SETUP_SCRIPT,
@@ -336,6 +338,9 @@ class UnifiedVaultTests(unittest.TestCase):
         )
         self.assertEqual(upd.returncode, 0, msg=upd.stderr or upd.stdout)
         self.assertIn("overwrites the installed skill files", upd.stdout)
+        self.assertEqual(vault_tool.read_bytes(), NEW_NICHE_SCRIPT.read_bytes())
+        self.assertEqual((self.vault / "tools/new-niche.py.bak").read_text(encoding="utf-8"), "# old launcher\n")
+        self.assertIn("SKIP (same)", upd.stdout)
         self.assertEqual(todo_path.read_text(encoding="utf-8"), "# Custom User Todo\n")
         self.assertIn("Store CRM Live Catalog", crm_skill.read_text(encoding="utf-8"))
 

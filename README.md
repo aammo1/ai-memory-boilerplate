@@ -51,6 +51,8 @@ your-memory-vault/
 
 ## Quick Start (1 Command — Moroccan COD Operator)
 
+> 📘 **New here? Follow the complete step-by-step guide: [`docs/SETUP.md`](docs/SETUP.md)** (prerequisites, first login, Obsidian, backups, Coolify deploy, local vs. live catalog, updates and troubleshooting).
+
 ### Scope & Prerequisites
 - **Target Market:** Purpose-built for **Moroccan Cash-on-Delivery (COD)** e-commerce (`+212` mobile validation, integer `MAD`, `fr`/`ar` RTL storefront + French CRM back-office, Ozon Express Morocco or `mock` courier via [`store-crm-boilerplate`](https://github.com/aammo1/store-crm-boilerplate)).
 - **OS & Runtime:** **Linux, macOS, or Windows WSL2** (`kie_generate.py` uses Unix `fcntl.flock`), **Python 3.11+**, **Astral `uv`** (`curl -LsSf https://astral.sh/uv/install.sh | sh`), **Node.js 22+**, and **Git**.
@@ -104,7 +106,7 @@ What `setup.py` does:
 - Copies `tools/kie_generate.py`, `tools/test_kie_generate.py`, and `scripts/new-niche.py` into `<vault>/tools/` (never overwrites existing files unless `--force` is passed).
 - Initializes a Git repository inside `$HOME/Work/ai-memory`.
 - Installs all 4 bundled skills (`ai-memory-kit`, `morocco-cod-marketing`, `crm-catalog`, `product-page-marketing-sections`) into `~/.agents/skills/` and auto-symlinks detected AI harnesses (`~/.claude/skills`, `~/.codex/skills`, `~/.gemini/config/skills`, `~/.gemini/antigravity-cli/skills`, `~/.cursor/skills`). If a harness already has a **real folder** with the same skill name, the installer prints a `WARNING` and leaves it alone: that copy will not receive updates until you move it away and re-run with `--update-skills`.
-- After pulling updates to this repo, refresh installed skills anytime without touching your vault notes:
+- After pulling updates to this repo, refresh installed skills **and the vault's `tools/` folder** (`kie_generate.py`, `new-niche.py`; changed files are kept as `.bak`) anytime without touching your vault notes:
   ```bash
   python3 scripts/setup.py --memory-dir "$HOME/Work/ai-memory" --update-skills
   ```
@@ -176,6 +178,8 @@ Open `$HOME/Work/ai-memory` in **Obsidian**:
 ai-memory-boilerplate/
 ├── README.md                                  # Documentation
 ├── LICENSE                                    # MIT License
+├── docs/
+│   └── SETUP.md                               # Complete new-user setup guide
 ├── scripts/
 │   ├── new-niche.py                           # One-command launcher (vault + 4 skills + store-crm-boilerplate)
 │   ├── setup.py                               # CLI installer (--stores, --add-store, --install-skill)

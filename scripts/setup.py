@@ -377,6 +377,36 @@ def sync_harness_symlinks(
     return results
 
 
+VAULT_TOOL_SOURCES = [
+    (TOOLS_DIR / "kie_generate.py", "kie_generate.py"),
+    (TOOLS_DIR / "test_kie_generate.py", "test_kie_generate.py"),
+    (REPO_ROOT / "scripts/new-niche.py", "new-niche.py"),
+]
+
+
+def refresh_vault_tools(memory_dir: Path, dry_run: bool) -> list[str]:
+    """Copy the latest tools into <vault>/tools/, keeping a .bak of any file that differs."""
+    results: list[str] = []
+    for src, name in VAULT_TOOL_SOURCES:
+        if not src.is_file():
+            continue
+        dest = memory_dir / "tools" / name
+        if dest.is_file() and dest.read_bytes() == src.read_bytes():
+            results.append(f"SKIP (same):   {dest}")
+            continue
+        if dry_run:
+            results.append(f"WOULD UPDATE:  {dest}")
+            continue
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        if dest.is_file():
+            backup = dest.with_name(dest.name + ".bak")
+            shutil.copy2(dest, backup)
+            results.append(f"BACKUP:        {backup}")
+        shutil.copy2(src, dest)
+        results.append(f"UPDATED:       {dest}")
+    return results
+
+
 def install_bundled_skills(
     skills_root: Path,
     replacements: dict[str, str],
@@ -426,7 +456,7 @@ def main() -> int:
     parser.add_argument(
         "--update-skills",
         action="store_true",
-        help="Refresh only the 4 bundled skills (and detected AI harness symlinks) without modifying existing vault notes. Overwrites local edits to installed skill files.",
+        help="Refresh the 4 bundled skills, detected AI harness symlinks, and <vault>/tools/ (kie_generate.py, new-niche.py; changed files are kept as .bak) without modifying vault notes. Overwrites local edits to installed skill files.",
     )
     parser.add_argument("--skills-dir", default=str(Path.home() / ".agents/skills"), help="Base skills directory (default: ~/.agents/skills)")
     parser.add_argument("--harness-home", help="Optional home directory to scan for AI harness skill folders (defaults to ~ when using default --skills-dir)")
@@ -461,7 +491,10 @@ def main() -> int:
         print("WARNING: --update-skills overwrites the installed skill files. Local edits made inside")
         print(f"         {skills_root}/<skill>/ are replaced; keep custom changes in this repo's skill/ folder instead.")
         install_bundled_skills(skills_root, replacements, True, args.dry_run, harness_home)
-        print("\nDone! All 4 skills refreshed without modifying vault notes.")
+        print(f"\n=== Refreshing vault tools in: {memory_dir / 'tools'} ===")
+        for line in refresh_vault_tools(memory_dir, args.dry_run):
+            print(line)
+        print("\nDone! All 4 skills and vault tools/ refreshed without modifying vault notes.")
         return 0
 
     if args.add_store:
@@ -591,6 +624,7 @@ def main() -> int:
         ".DS_Store\n"
         ".env\n"
         ".env.*\n"
+        "tools/*.bak\n"
     )
     print(write_safe(memory_dir / ".gitignore", vault_gitignore, args.force, args.dry_run))
 

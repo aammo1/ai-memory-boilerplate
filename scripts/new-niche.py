@@ -411,6 +411,8 @@ def main() -> int:
                 store,
                 "--skills-dir",
                 str(skills_dir),
+                "--config-dir",
+                str(config_dir),
                 "--install-skill",
             ],
             check=True,

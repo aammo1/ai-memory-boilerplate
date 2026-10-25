@@ -73,7 +73,7 @@ python3 scripts/new-niche.py \
 ```
 
 What `new-niche.py` does automatically:
-1. **If `~/Work/ai-memory` does not exist yet:** Runs `setup.py` to initialize the unified Obsidian vault, installs all 4 skills (`ai-memory-kit`, `morocco-cod-marketing`, `crm-catalog`, `product-page-marketing-sections`) into `~/.agents/skills/`, and **auto-symlinks** them into any detected AI harness on your machine (`~/.claude/skills`, `~/.codex/skills`, `~/.gemini/config/skills` for Antigravity, `~/.cursor/skills`).
+1. **If `~/Work/ai-memory` does not exist yet:** Runs `setup.py` to initialize the unified Obsidian vault and **symlinks** all 4 skills (`ai-memory-kit`, `morocco-cod-marketing`, `crm-catalog`, `product-page-marketing-sections`) into `~/.agents/skills/` plus any detected AI harness (`~/.claude/skills`, `~/.codex/skills`, `~/.gemini/config/skills` for Antigravity, `~/.cursor/skills`) directly from `ai-memory-boilerplate/skill/` (**single source of truth** — zero duplicated copies).
 2. **Creates Product Pictures folders:** `~/Pictures/glow-skin_pics/staging/` and `uploaded/`.
 3. **Clones & configures [`store-crm-boilerplate`](https://github.com/aammo1/store-crm-boilerplate):** Clones into `~/Projects/glow-skin`, runs `npm install` + `npm run new-store` (sharing `CATALOG_AGENT_KEY` across `.env.local` and `.env.production.example`), writes `~/.config/glow-skin/catalog-agent.env` + `catalog-agent.prod.env` (`chmod 600`), and links `~/Projects/glow-skin/AGENTS.md` to your vault.
 4. **Wires real paths in `PROFILE.md`:** Updates `~/Work/ai-memory/PROFILE.md` with your real repository, production URL, pictures, and catalog env paths.
@@ -100,11 +100,7 @@ What `setup.py` does:
   - `.obsidian/` settings so Obsidian **Bases** and **Templates** work out of the box
 - Copies `tools/kie_generate.py`, `tools/test_kie_generate.py`, and `scripts/new-niche.py` into `<vault>/tools/` (never overwrites existing files unless `--force` is passed).
 - Initializes a Git repository inside `$HOME/Work/ai-memory`.
-- Installs all 4 bundled skills (`ai-memory-kit`, `morocco-cod-marketing`, `crm-catalog`, `product-page-marketing-sections`) into `~/.agents/skills/` and auto-symlinks detected AI harnesses (`~/.claude/skills`, `~/.codex/skills`, `~/.gemini/config/skills`, `~/.cursor/skills`).
-- After pulling updates to this repo, refresh installed skills anytime without touching your vault notes:
-  ```bash
-  python3 scripts/setup.py --memory-dir "$HOME/Work/ai-memory" --update-skills
-  ```
+- **Single Source of Truth for Skills:** Symlinks all 4 bundled skills (`ai-memory-kit`, `morocco-cod-marketing`, `crm-catalog`, `product-page-marketing-sections`) in `~/.agents/skills/` and detected AI harnesses (`~/.claude/skills`, `~/.codex/skills`, `~/.gemini/config/skills`, `~/.cursor/skills`) directly to `ai-memory-boilerplate/skill/` (and records `MEMORY_DIR` in `~/.config/ai-memory-kit/vault.env`). Any edit or `git pull` in `ai-memory-boilerplate/skill/` takes effect immediately across all AI tools with zero drift.
 
 ### Adding a New Store or Niche Later (Via the Skill)
 

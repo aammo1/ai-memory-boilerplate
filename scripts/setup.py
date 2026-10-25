@@ -25,8 +25,8 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 TEMPLATES_DIR = REPO_ROOT / "templates"
 TOOLS_DIR = REPO_ROOT / "tools"
 SKILLS_SRC_DIR = REPO_ROOT / "skill"
-BUNDLED_SKILLS = [
-    "ai-memory-kit",
+SKILL_TEMPLATE = SKILLS_SRC_DIR / "ai-memory-kit/SKILL.md.template"
+BUNDLED_STATIC_SKILLS = [
     "morocco-cod-marketing",
     "crm-catalog",
     "product-page-marketing-sections",
@@ -324,43 +324,6 @@ def scaffold_store(memory_dir: Path, store: str, base_tpl: Path, force: bool, dr
     return results
 
 
-def link_skill_dir(
-    src_dir: Path,
-    link_path: Path,
-    force: bool,
-    dry_run: bool,
-    replace_copied_dir: bool = False,
-) -> str:
-    resolved_src = src_dir.resolve()
-    if link_path.is_symlink():
-        try:
-            same_target = link_path.resolve() == resolved_src
-        except OSError:
-            same_target = False
-        if same_target:
-            return f"SKIP (linked): {link_path} -> {resolved_src}"
-        if not force:
-            return f"SKIP (exists): {link_path}"
-        if dry_run:
-            return f"WOULD LINK:    {link_path} -> {resolved_src}"
-        link_path.unlink()
-        link_path.symlink_to(resolved_src)
-        return f"UPDATED LINK:  {link_path} -> {resolved_src}"
-    if link_path.exists():
-        if replace_copied_dir and force and link_path.is_dir():
-            if dry_run:
-                return f"WOULD REPLACE COPY WITH LINK: {link_path} -> {resolved_src}"
-            shutil.rmtree(link_path)
-            link_path.symlink_to(resolved_src)
-            return f"LINKED (replaced copy): {link_path} -> {resolved_src}"
-        return f"SKIP (dir):    {link_path}"
-    if dry_run:
-        return f"WOULD LINK:    {link_path} -> {resolved_src}"
-    link_path.parent.mkdir(parents=True, exist_ok=True)
-    link_path.symlink_to(resolved_src)
-    return f"LINKED:        {link_path} -> {resolved_src}"
-
-
 def sync_harness_symlinks(
     skills_root: Path,
     harness_home: Path,
@@ -378,29 +341,57 @@ def sync_harness_symlinks(
         if target_skills_dir.exists() and target_skills_dir.resolve() == resolved_root:
             continue
         for skill_name in skill_names:
-            src_dir = (SKILLS_SRC_DIR / skill_name).resolve()
+            src_dir = (resolved_root / skill_name).resolve()
             link_path = target_skills_dir / skill_name
-            results.append(link_skill_dir(src_dir, link_path, force, dry_run, replace_copied_dir=True))
+            if link_path.is_symlink():
+                try:
+                    same_target = link_path.resolve() == src_dir
+                except OSError:
+                    same_target = False
+                if same_target:
+                    results.append(f"SKIP (linked): {link_path} -> {src_dir}")
+                    continue
+                if not force:
+                    results.append(f"SKIP (exists): {link_path}")
+                    continue
+                if dry_run:
+                    results.append(f"WOULD LINK:    {link_path} -> {src_dir}")
+                    continue
+                link_path.unlink()
+                link_path.symlink_to(src_dir)
+                results.append(f"UPDATED LINK:  {link_path} -> {src_dir}")
+            elif link_path.exists():
+                results.append(f"SKIP (dir):    {link_path}")
+            else:
+                if dry_run:
+                    results.append(f"WOULD LINK:    {link_path} -> {src_dir}")
+                    continue
+                target_skills_dir.mkdir(parents=True, exist_ok=True)
+                link_path.symlink_to(src_dir)
+                results.append(f"LINKED:        {link_path} -> {src_dir}")
     return results
 
 
 def install_bundled_skills(
     skills_root: Path,
-    memory_dir: Path,
+    replacements: dict[str, str],
     force: bool,
     dry_run: bool,
     harness_home: Path | None,
-    config_dir: Path | None,
 ) -> None:
-    if config_dir is not None:
-        vault_env = config_dir / "ai-memory-kit/vault.env"
-        print(write_safe(vault_env, f"MEMORY_DIR={memory_dir}\n", True, dry_run))
-    for skill_name in BUNDLED_SKILLS:
-        src_dir = (SKILLS_SRC_DIR / skill_name).resolve()
-        dest_link = skills_root / skill_name
-        print(link_skill_dir(src_dir, dest_link, force, dry_run, replace_copied_dir=True))
+    skill_dest = skills_root / "ai-memory-kit/SKILL.md"
+    print(write_safe(skill_dest, render(SKILL_TEMPLATE, replacements), force, dry_run))
+    for static_skill in BUNDLED_STATIC_SKILLS:
+        src_dir = SKILLS_SRC_DIR / static_skill
+        if src_dir.is_dir():
+            for src_file in sorted(src_dir.rglob("*")):
+                if src_file.is_file():
+                    rel_path = src_file.relative_to(src_dir)
+                    dest_file = skills_root / static_skill / rel_path
+                    print(copy_safe(src_file, dest_file, force, dry_run))
     if harness_home is not None:
-        for line in sync_harness_symlinks(skills_root, harness_home, BUNDLED_SKILLS, force, dry_run):
+        all_skills = ["ai-memory-kit"] + BUNDLED_STATIC_SKILLS
+        for line in sync_harness_symlinks(skills_root, harness_home, all_skills, force, dry_run):
             print(line)
 
 
@@ -424,15 +415,14 @@ def main() -> int:
         "--install-skills",
         dest="install_skill",
         action="store_true",
-        help="Symlink all 4 skills from this repo's skill/ folder (single source of truth) into --skills-dir and detected AI harnesses",
+        help="Install all 4 bundled skills to --skills-dir and auto-link detected AI harnesses (Claude, Codex, Antigravity, Cursor)",
     )
     parser.add_argument(
         "--update-skills",
         action="store_true",
-        help="Refresh symlinks for the 4 bundled skills (replacing any old copied skill dirs) without modifying vault notes",
+        help="Refresh only the 4 bundled skills (and detected AI harness symlinks) without modifying existing vault notes",
     )
     parser.add_argument("--skills-dir", default=str(Path.home() / ".agents/skills"), help="Base skills directory (default: ~/.agents/skills)")
-    parser.add_argument("--config-dir", help="Optional config directory for ai-memory-kit/vault.env (defaults to ~/.config when using default --skills-dir)")
     parser.add_argument("--harness-home", help="Optional home directory to scan for AI harness skill folders (defaults to ~ when using default --skills-dir)")
     parser.add_argument("--no-harness-sync", action="store_true", help="Do not create skill symlinks in ~/.claude, ~/.codex, ~/.gemini/config, or ~/.cursor")
     parser.add_argument("--force", action="store_true", help="Overwrite existing files")
@@ -449,18 +439,21 @@ def main() -> int:
         elif skills_root == default_skills_root:
             harness_home = Path.home().resolve()
 
-    config_dir: Path | None = None
-    if args.config_dir:
-        config_dir = Path(args.config_dir).expanduser().resolve()
-    elif skills_root == default_skills_root:
-        config_dir = (Path.home() / ".config").resolve()
-
     base_tpl = TEMPLATES_DIR / "Products_Marketing.base.template"
 
     if args.update_skills and not args.add_store and (memory_dir / "PROFILE.md").is_file() and not args.force:
-        print(f"=== Linking 4 Skills -> Single Source of Truth ({SKILLS_SRC_DIR}) ===")
-        install_bundled_skills(skills_root, memory_dir, True, args.dry_run, harness_home, config_dir)
-        print("\nDone! All 4 skills now point directly to ai-memory-boilerplate/skill/ without modifying vault notes.")
+        existing_stores = discover_existing_stores(memory_dir)
+        fallback_stores = [sanitize_slug(s) for s in args.stores.split(",") if s.strip()] or ["store-a"]
+        first_store = existing_stores[0] if existing_stores else fallback_stores[0]
+        replacements = {
+            "USER_NAME": args.name,
+            "MEMORY_DIR": str(memory_dir),
+            "DATE": datetime.date.today().isoformat(),
+            "FIRST_STORE": first_store,
+        }
+        print(f"=== Refreshing 4 Bundled Skills in: {skills_root} ===")
+        install_bundled_skills(skills_root, replacements, True, args.dry_run, harness_home)
+        print("\nDone! All 4 skills refreshed without modifying vault notes.")
         return 0
 
     if args.add_store:
@@ -600,11 +593,10 @@ def main() -> int:
     if args.install_skill or args.update_skills:
         install_bundled_skills(
             skills_root,
-            memory_dir,
+            replacements,
             args.force or args.update_skills,
             args.dry_run,
             harness_home,
-            config_dir,
         )
 
     print("\nDone! Next steps:")

@@ -272,41 +272,31 @@ class UnifiedVaultTests(unittest.TestCase):
         self.assertEqual(ok.returncode, 0, msg=ok.stderr or ok.stdout)
         self.assertTrue((self.vault / "01 Products/my-brand").is_dir())
 
-        canonical_skills = SCRIPTS_DIR.parent / "skill"
-        for skill_name in ["ai-memory-kit", "morocco-cod-marketing", "crm-catalog", "product-page-marketing-sections"]:
-            self.assertTrue((self.skills / skill_name).is_symlink(), msg=f"Expected symlink for {skill_name}")
-            self.assertEqual((self.skills / skill_name).resolve(), (canonical_skills / skill_name).resolve())
-            for sub in [".claude/skills", ".codex/skills", ".gemini/config/skills", ".cursor/skills"]:
+        for sub in [".claude/skills", ".codex/skills", ".gemini/config/skills", ".cursor/skills"]:
+            for skill_name in ["ai-memory-kit", "morocco-cod-marketing", "crm-catalog", "product-page-marketing-sections"]:
                 link = harness_home / sub / skill_name
                 self.assertTrue(link.is_symlink(), msg=f"Missing symlink: {link}")
-                self.assertEqual(link.resolve(), (canonical_skills / skill_name).resolve())
+                self.assertEqual(link.resolve(), (self.skills / skill_name).resolve())
 
-        # Simulate a legacy copied directory, then run --update-skills: replaces copy with symlink, vault stays untouched
+        # Modify a vault file and a skill file, then run --update-skills: skill refreshes, vault stays untouched
         todo_path = self.vault / "TODO.md"
         todo_path.write_text("# Custom User Todo\n", encoding="utf-8")
-        legacy_copy = self.skills / "crm-catalog"
-        legacy_copy.unlink()
-        legacy_copy.mkdir(parents=True)
-        (legacy_copy / "SKILL.md").write_text("stale copied skill", encoding="utf-8")
+        crm_skill = self.skills / "crm-catalog/SKILL.md"
+        crm_skill.write_text("stale content", encoding="utf-8")
 
-        config_dir = self.root / "cfg"
         upd = run_cli(
             SETUP_SCRIPT,
             "--memory-dir",
             str(self.vault),
             "--skills-dir",
             str(self.skills),
-            "--config-dir",
-            str(config_dir),
             "--harness-home",
             str(harness_home),
             "--update-skills",
         )
         self.assertEqual(upd.returncode, 0, msg=upd.stderr or upd.stdout)
         self.assertEqual(todo_path.read_text(encoding="utf-8"), "# Custom User Todo\n")
-        self.assertTrue(legacy_copy.is_symlink())
-        self.assertEqual(legacy_copy.resolve(), (canonical_skills / "crm-catalog").resolve())
-        self.assertIn(f"MEMORY_DIR={self.vault}", (config_dir / "ai-memory-kit/vault.env").read_text(encoding="utf-8"))
+        self.assertIn("Store CRM Live Catalog", crm_skill.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

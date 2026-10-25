@@ -74,12 +74,12 @@ What `setup.py` does:
 - Initializes a Git repository inside `$HOME/Work/ai-memory`.
 - Installs the **`ai-memory-kit`** skill into `~/.agents/skills/ai-memory-kit/SKILL.md`.
 
-### Adding a New Store or Niche Later
+### Adding a New Store or Niche Later (Via the Skill)
 
-```bash
-python3 scripts/setup.py --memory-dir "$HOME/Work/ai-memory" --add-store "new-brand"
-```
-This automatically creates `01 Products/new-brand/`, creates `02 Bases/new-brand_Marketing.base`, adds a `new-brand Products` view tab to `02 Bases/Products_Marketing.base`, and appends the `new-brand` column to `PROFILE.md`.
+You never need to run `setup.py` again after initial setup. Just tell your AI from any folder:
+- *"use `ai-memory-kit` and add a new store called `new-brand`"*
+
+The `ai-memory-kit` skill automatically creates `01 Products/new-brand/`, creates `02 Bases/new-brand_Marketing.base`, adds a `new-brand Products` view tab to `02 Bases/Products_Marketing.base`, and appends the `new-brand` column to `PROFILE.md`.
 
 ### Health Check & Offline Tests
 

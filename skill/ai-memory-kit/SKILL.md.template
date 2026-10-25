@@ -42,16 +42,12 @@ All stores, brands, and niches live inside `{{MEMORY_DIR}}`:
 - If the user's specialized marketing skill (e.g. `morocco-cod-marketing`) is installed, follow its workflow while targeting `{{MEMORY_DIR}}` as the vault root and saving the product note under `01 Products/<store>/<product_name>.md`.
 
 ### 2. Onboard a New Store, Brand, or Niche
-When the user wants to add a new store or niche (`<store_slug>`):
+When the user asks to add a new store or niche (`<store_slug>`), do everything directly via this skill (no external setup script needed):
 1. Create directory `{{MEMORY_DIR}}/01 Products/<store_slug>/`.
-2. Create `{{MEMORY_DIR}}/02 Bases/<store_slug>_Marketing.base` by copying `{{MEMORY_DIR}}/02 Bases/Products_Marketing.base` and updating its filter and view name:
-   ```yaml
-   filters:
-     and:
-       - file.inFolder("01 Products/<store_slug>")
-   ```
-3. Add a new `<store_slug>` column to the Key System Paths table in `{{MEMORY_DIR}}/PROFILE.md` (Store Code Repository, `01 Products/<store_slug>/<product>.md`, `02 Bases/<store_slug>_Marketing.base`, Product Pictures Folder, `03 Assets/Reference Heroes/<store_slug>_hero_01.png`, Catalog API Env).
-4. If the user wants to connect an existing code repository to this vault, ask for confirmation (Rule 2) and add this block at the top of that repository's local `AGENTS.md`:
+2. Create `{{MEMORY_DIR}}/02 Bases/<store_slug>_Marketing.base` filtering `file.inFolder("01 Products/<store_slug>")` and `'file.ext == "md"'`.
+3. Add a `<store_slug> Products` view tab to `{{MEMORY_DIR}}/02 Bases/Products_Marketing.base` filtering `file.inFolder("01 Products/<store_slug>")`.
+4. Add a new `<store_slug>` column to the Key System Paths table (and update the `01 Products/` & `02 Bases/` tree lines) in `{{MEMORY_DIR}}/PROFILE.md`.
+5. If the user wants to connect the store's code repository to this vault, ask for confirmation (Rule 2) and add this block at the top of that repository's local `AGENTS.md`:
    ```markdown
    ## External Memory & Workflow
    Shared cross-session memory & marketing vault lives in {{MEMORY_DIR}}:

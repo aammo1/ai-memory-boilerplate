@@ -30,7 +30,7 @@ def load_api_key():
     if key:
         return key.strip()
     config_root = Path.home() / ".config"
-    candidates = [config_root / "kie/kie.env", config_root / "zehri/kie.env"]
+    candidates = [config_root / "kie/kie.env"]
     if config_root.is_dir():
         for extra in sorted(config_root.glob("*/kie.env")):
             if extra not in candidates:
@@ -48,7 +48,7 @@ def upload_local_image(api_key: str, file_path: Path) -> str:
     b64 = base64.b64encode(file_path.read_bytes()).decode("utf-8")
     payload = {
         "base64Data": f"data:{mime};base64,{b64}",
-        "uploadPath": "dsh-products",
+        "uploadPath": "product-assets",
         "fileName": f"{int(time.time())}_{file_path.name}"
     }
     r = requests.post(UPLOAD_URL, headers={"Authorization": f"Bearer {api_key}"}, json=payload, timeout=60)

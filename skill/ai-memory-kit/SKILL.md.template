@@ -44,8 +44,8 @@ All stores, brands, and niches live inside `{{MEMORY_DIR}}`:
 ### 2. Onboard a New Store, Brand, or Niche
 When the user asks to add a new store or niche (`<store_slug>`), do everything directly via this skill (no external setup script needed):
 1. Create directory `{{MEMORY_DIR}}/01 Products/<store_slug>/`.
-2. Create `{{MEMORY_DIR}}/02 Bases/<store_slug>_Marketing.base` filtering `file.inFolder("01 Products/<store_slug>")` and `'file.ext == "md"'`.
-3. Add a `<store_slug> Products` view tab to `{{MEMORY_DIR}}/02 Bases/Products_Marketing.base` filtering `file.inFolder("01 Products/<store_slug>")`.
+2. Create `{{MEMORY_DIR}}/02 Bases/<store_slug>_Marketing.base` by copying an existing `{{MEMORY_DIR}}/02 Bases/<existing>_Marketing.base` file and replacing only the folder filter (`file.inFolder("01 Products/<store_slug>")`) and view `name: <store_slug> Products`. This preserves `formulas.Product_image: image(cover)`, `type: notion-table`, and the exact 18 column order.
+3. Add a `<store_slug> Products` view tab to `{{MEMORY_DIR}}/02 Bases/Products_Marketing.base` (copying the `order:` and `image:` settings from an existing store view tab) filtering `file.inFolder("01 Products/<store_slug>")`.
 4. Add a new `<store_slug>` column to the Key System Paths table (and update the `01 Products/` & `02 Bases/` tree lines) in `{{MEMORY_DIR}}/PROFILE.md`.
 5. If the user wants to connect the store's code repository to this vault, ask for confirmation (Rule 2) and add this block at the top of that repository's local `AGENTS.md`:
    ```markdown
@@ -57,10 +57,13 @@ When the user asks to add a new store or niche (`<store_slug>`), do everything d
    ```
 
 ### 3. Customize `00 Templates/Product Template.md` for a Specific Niche
-If the user wants to adapt the vault for a new industry or niche, add their custom categories, angles, or hooks to the YAML lists in `{{MEMORY_DIR}}/00 Templates/Product Template.md` while keeping the property keys intact so `02 Bases/*.base` continues to work without changes.
+If the user wants to adapt the vault for a new industry or niche, add or edit the list items inside the YAML properties in `{{MEMORY_DIR}}/00 Templates/Product Template.md`. **Never rename or delete the top-level YAML property keys themselves**, because `.obsidian/types.json`, `02 Bases/*.base`, and `scripts/verify.py` depend on those exact key names.
 
 ### 4. Run the Product Launch Pipeline (Steps 0 to 10)
-Execute `{{MEMORY_DIR}}/LAUNCH-PIPELINE.md` for any store in `PROFILE.md`, tracking per-product state in `<product_dir>/launch-state.json` and generating gallery/ad visuals with `{{MEMORY_DIR}}/tools/kie_generate.py`.
+Execute `{{MEMORY_DIR}}/LAUNCH-PIPELINE.md` for any store in `PROFILE.md`, tracking per-product state in `<product_dir>/launch-state.json` and generating gallery/ad visuals with `{{MEMORY_DIR}}/tools/kie_generate.py`:
+- **Steps 1 & 2 (Marketing Plan):** Use `~/.agents/skills/morocco-cod-marketing/SKILL.md` (when installed) targeting `{{MEMORY_DIR}}/01 Products/<store>/<product_name>.md`.
+- **Step 8 (Live Catalog):** Use `~/.agents/skills/crm-catalog/SKILL.md` with the store's `~/.config/<store>/catalog-agent.env`.
+- **Step 9 (Product Page Sections):** Use `~/.agents/skills/product-page-marketing-sections/SKILL.md` in the store's code repository (`src/custom/`).
 
 ### 5. Orient, Recall, and Log Tasks
 - Answer questions using verified facts from `PROFILE.md`, `TODO.md`, `01 Products/`, or a product's `launch-state.json`.

@@ -31,7 +31,10 @@ tools/
 
 ## Installed Skills (`~/.agents/skills`)
 - `ai-memory-kit` — loads and updates this unified vault (`PROFILE.md`, `TODO.md`, `LAUNCH-PIPELINE.md`, `01 Products/`) on demand from any folder on the machine, and can onboard new stores/niches.
-- *(Optional)* `morocco-cod-marketing`, `zehri-catalog`, `product-page-marketing-sections`, `image-to-webp`, `coolify-deploy`, `meta-pixel-capi`, `git-checkpoint`.
+- `morocco-cod-marketing` — builds emotionally grounded Meta ad packages (6 static ads, optional video scripts) and a product-page brief with 4 gallery prompts inside `01 Products/<store>/`.
+- `crm-catalog` — manages any `store-crm-boilerplate` live catalog (Contract v2) via `~/.config/<store>/catalog-agent.env`.
+- `product-page-marketing-sections` — creates persuasive mobile-first marketing sections (`src/custom/`) from the product note's brief while preserving checkout and JS budgets.
+- *(Optional)* `image-to-webp`, `coolify-deploy`, `meta-pixel-capi`, `git-checkpoint`.
 
 ## Preferences for Working with AI
 - **Simple, direct language:** No fluff. Use simple words, keep answers brief, and include a short dummy example when it helps.

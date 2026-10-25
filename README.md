@@ -6,7 +6,11 @@ Instead of switching between separate Obsidian vaults for your AI memory and eac
 - **4 plain Markdown memory files** (`AGENTS.md`, `PROFILE.md`, `TODO.md`, `LAUNCH-PIPELINE.md`) at the root for zero-friction AI context.
 - **Built-in multi-store Obsidian Marketing Vault folders** (`00 Templates/`, `01 Products/<store>/`, `02 Bases/`, `03 Assets/`) pre-configured with Obsidian Bases tables and cover images.
 - **Crash-safe Kie.ai image generator** (`tools/kie_generate.py`) with `flock` locking and offline tests.
-- **On-demand skill (`ai-memory-kit`)** you can call from any folder on your machine.
+- **4 Bundled Skills (`skill/`)** installed in one command (`--install-skill`):
+  - **`ai-memory-kit`** — on-demand vault manager, task tracker, and new-store onboarder from any folder.
+  - **`morocco-cod-marketing`** — 3-checkpoint Moroccan COD strategy, 6 static ads, optional video scripts, and 4 gallery prompts saved directly into `01 Products/<store>/`.
+  - **`crm-catalog`** — live catalog client (Contract v2) for [`store-crm-boilerplate`](https://github.com/aammo1/store-crm-boilerplate) supporting single-SKU (`standard`) and multi-option products across any niche.
+  - **`product-page-marketing-sections`** — mobile-first custom product-page section builder (`src/custom/`) with 26 design recipes.
 
 ---
 
@@ -145,8 +149,10 @@ ai-memory-boilerplate/
 │   ├── verify.py                              # Health, frontmatter, cover-link & secret-leak checker
 │   └── test_vault.py                          # Offline unit tests for setup.py and verify.py
 ├── skill/
-│   └── ai-memory-kit/
-│       └── SKILL.md.template                  # On-demand skill template for ~/.agents/skills/
+│   ├── ai-memory-kit/                         # On-demand unified vault & pipeline skill
+│   ├── morocco-cod-marketing/                 # Moroccan COD ad package & page-brief skill
+│   ├── crm-catalog/                           # Live catalog API v2 skill for store-crm-boilerplate
+│   └── product-page-marketing-sections/       # Mobile-first product-page marketing sections skill
 ├── templates/
 │   ├── AGENTS.md.template                     # Unified vault boot instructions
 │   ├── PROFILE.md.template                    # Identity, dynamic multi-store paths table, and AI rules

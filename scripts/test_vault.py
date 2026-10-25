@@ -60,6 +60,10 @@ class UnifiedVaultTests(unittest.TestCase):
         self.assertTrue((self.vault / ".obsidian/types.json").is_file())
         self.assertTrue((self.vault / ".obsidian/plugins/good-bases/main.js").is_file())
         self.assertTrue((self.skills / "ai-memory-kit/SKILL.md").is_file())
+        self.assertTrue((self.skills / "morocco-cod-marketing/SKILL.md").is_file())
+        self.assertTrue((self.skills / "crm-catalog/SKILL.md").is_file())
+        self.assertTrue((self.skills / "crm-catalog/scripts/catalog-agent-client.mjs").is_file())
+        self.assertTrue((self.skills / "product-page-marketing-sections/SKILL.md").is_file())
 
         types_data = json.loads((self.vault / ".obsidian/types.json").read_text(encoding="utf-8"))
         self.assertEqual(len(types_data["types"]), 17)

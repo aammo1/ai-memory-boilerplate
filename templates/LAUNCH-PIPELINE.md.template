@@ -31,7 +31,9 @@ This pipeline works for **any store, brand, or niche** registered in `PROFILE.md
 ## Step 3 — Create Product Picture Folder Tree
 1. Using the marketing product name, create the staging folder inside the target store's Product Pictures Folder (from `PROFILE.md`):
    - `<store_pictures_folder>/staging/<product_name>/`
-2. Create one subfolder per color variant (e.g., `noir/`, `marron/`, `blanc/`) + `ads_folder/`.
+2. Create variant subfolders + `ads_folder/`:
+   - **Multi-variant product (by color, volume, or style):** one subfolder per visual variant (e.g., `noir/`, `marron/`, `50ml/`) + `ads_folder/`.
+   - **Single-SKU / Optionless product (e.g., gadget, supplement, single cream):** create `standard/` + `ads_folder/`.
 3. Initialize `<product_name>/launch-state.json` (recording `"store"`, `"marketing_note": "{{MEMORY_DIR}}/01 Products/<store>/<product_name>.md"`, and `"product_dir"`) and link its path in `TODO.md`.
 
 ---
@@ -72,9 +74,10 @@ Show the user the generated gallery images and `ads_folder/` visuals + `ad-copy.
 
 ---
 
-## Step 8 — Live Catalog Creation
-1. Verify `"step7_approved": true` and confirm the store's catalog API origin matches `PROFILE.md`.
-2. Upload **only** the color variant folders with constraint: **"dont touch the ads_folder"**.
+## Step 8 — Live Catalog Creation (`crm-catalog`)
+1. Verify `"step7_approved": true` and confirm the store's catalog API origin matches `PROFILE.md` (`~/.agents/skills/crm-catalog/SKILL.md` with `~/.config/<store>/catalog-agent.env`).
+2. Upload **only** the product/variant gallery folders (e.g., `standard/` or each variant folder) with constraint: **"dont touch the ads_folder"**.
+   - For single-SKU / optionless products on `crm-catalog`, use `variants: [{ "key": "standard", "options": [] }]` and `initialStock: [{ "variantKey": "standard", "qty": <n> }]`.
 3. Follow `preview` -> user approval -> `apply`. Save request ID, receipt, product ID, slug, and live URL in `launch-state.json`.
 4. Move the product folder from `staging/<product_name>` to `uploaded/<product_name>` and update `product_dir` in `launch-state.json` and `TODO.md`.
 
@@ -82,8 +85,8 @@ Show the user the generated gallery images and `ads_folder/` visuals + `ad-copy.
 
 ## Step 9 — Product Page Marketing Sections
 1. Open the target store's **Code Repository** (from `PROFILE.md`).
-2. Design custom product-page marketing sections using the live product URL/slug and the marketing note path (`{{MEMORY_DIR}}/01 Products/<store>/<product_name>.md`).
-3. Confirm proposed code changes with the user first (Rule 2), implement, and run `npm run lint`, `npx tsc --noEmit`, and `npm run build`.
+2. Design custom product-page marketing sections using the live product URL/slug and the marketing note path (`{{MEMORY_DIR}}/01 Products/<store>/<product_name>.md`). Keep custom sections server-rendered (`src/custom/`) so client JS budgets stay intact.
+3. Confirm proposed code changes with the user first (Rule 2), implement, and run `npm run lint`, `npx tsc --noEmit`, `npm run build`, and `npm run perf-budget` (when present in `package.json`).
 4. After explicit deployment approval, deploy and verify the live product page and checkout controls.
 
 ---

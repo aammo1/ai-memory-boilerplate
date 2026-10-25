@@ -24,7 +24,13 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 TEMPLATES_DIR = REPO_ROOT / "templates"
 TOOLS_DIR = REPO_ROOT / "tools"
-SKILL_TEMPLATE = REPO_ROOT / "skill/ai-memory-kit/SKILL.md.template"
+SKILLS_SRC_DIR = REPO_ROOT / "skill"
+SKILL_TEMPLATE = SKILLS_SRC_DIR / "ai-memory-kit/SKILL.md.template"
+BUNDLED_STATIC_SKILLS = [
+    "morocco-cod-marketing",
+    "crm-catalog",
+    "product-page-marketing-sections",
+]
 
 OBSIDIAN_CORE_PLUGINS = {
     "file-explorer": True,
@@ -323,7 +329,13 @@ def main() -> int:
         "--add-store",
         help="Add a single new store/niche subfolder, Obsidian Base table, and PROFILE.md column to an existing vault",
     )
-    parser.add_argument("--install-skill", action="store_true", help="Install the ai-memory-kit skill to ~/.agents/skills/ai-memory-kit/")
+    parser.add_argument(
+        "--install-skill",
+        "--install-skills",
+        dest="install_skill",
+        action="store_true",
+        help="Install all 4 bundled skills (ai-memory-kit, morocco-cod-marketing, crm-catalog, product-page-marketing-sections) to ~/.agents/skills/",
+    )
     parser.add_argument("--skills-dir", default=str(Path.home() / ".agents/skills"), help="Base skills directory (default: ~/.agents/skills)")
     parser.add_argument("--force", action="store_true", help="Overwrite existing files")
     parser.add_argument("--dry-run", action="store_true", help="Preview actions without writing to disk")
@@ -464,8 +476,17 @@ def main() -> int:
         print(f"GIT INIT:      {memory_dir}/.git")
 
     if args.install_skill:
-        skill_dest = Path(args.skills_dir).expanduser().resolve() / "ai-memory-kit/SKILL.md"
+        skills_root = Path(args.skills_dir).expanduser().resolve()
+        skill_dest = skills_root / "ai-memory-kit/SKILL.md"
         print(write_safe(skill_dest, render(SKILL_TEMPLATE, replacements), args.force, args.dry_run))
+        for static_skill in BUNDLED_STATIC_SKILLS:
+            src_dir = SKILLS_SRC_DIR / static_skill
+            if src_dir.is_dir():
+                for src_file in sorted(src_dir.rglob("*")):
+                    if src_file.is_file():
+                        rel_path = src_file.relative_to(src_dir)
+                        dest_file = skills_root / static_skill / rel_path
+                        print(copy_safe(src_file, dest_file, args.force, args.dry_run))
 
     print("\nDone! Next steps:")
     print(f"  1. Open '{memory_dir}' directly in Obsidian (Bases, GoodBases & Templates are pre-configured).")

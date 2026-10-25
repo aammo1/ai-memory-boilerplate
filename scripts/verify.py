@@ -17,6 +17,7 @@ REQUIRED_FILES = [
     ".obsidian/plugins/good-bases/main.js",
     ".obsidian/plugins/good-bases/styles.css",
     "tools/kie_generate.py",
+    "tools/new-niche.py",
 ]
 
 REQUIRED_DIRS = [

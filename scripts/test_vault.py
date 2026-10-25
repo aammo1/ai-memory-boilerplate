@@ -10,6 +10,7 @@ from pathlib import Path
 SCRIPTS_DIR = Path(__file__).resolve().parent
 SETUP_SCRIPT = SCRIPTS_DIR / "setup.py"
 VERIFY_SCRIPT = SCRIPTS_DIR / "verify.py"
+NEW_NICHE_SCRIPT = SCRIPTS_DIR / "new-niche.py"
 
 
 def run_cli(script: Path, *args: str) -> subprocess.CompletedProcess:
@@ -149,6 +150,78 @@ class UnifiedVaultTests(unittest.TestCase):
         res = run_cli(VERIFY_SCRIPT, "--memory-dir", str(self.vault))
         self.assertEqual(res.returncode, 1)
         self.assertIn("Possible secret value detected", res.stdout)
+
+    def test_new_niche_brand_new_user_and_second_store(self):
+        fake_template = self.root / "fake-store-template"
+        fake_template.mkdir()
+        (fake_template / "AGENTS.md").write_text("# Store CRM Template\n", encoding="utf-8")
+        (fake_template / "package.json").write_text('{"name": "store-crm-boilerplate"}\n', encoding="utf-8")
+
+        projects_dir = self.root / "Projects"
+        pictures_dir = self.root / "Pictures"
+        config_dir = self.root / "config"
+
+        # 1. Brand-new user (vault does not exist yet!)
+        res1 = run_cli(
+            NEW_NICHE_SCRIPT,
+            "--store",
+            "glow-skin",
+            "--name",
+            "Karim",
+            "--memory-dir",
+            str(self.vault),
+            "--projects-dir",
+            str(projects_dir),
+            "--pictures-dir",
+            str(pictures_dir),
+            "--config-dir",
+            str(config_dir),
+            "--skills-dir",
+            str(self.skills),
+            "--store-template",
+            str(fake_template),
+            "--skip-npm",
+        )
+        self.assertEqual(res1.returncode, 0, msg=res1.stderr or res1.stdout)
+        self.assertTrue((self.vault / "PROFILE.md").is_file())
+        self.assertTrue((self.skills / "ai-memory-kit/SKILL.md").is_file())
+        self.assertTrue((self.skills / "crm-catalog/SKILL.md").is_file())
+        self.assertTrue((projects_dir / "glow-skin/package.json").is_file())
+        self.assertIn("## External Memory & Workflow", (projects_dir / "glow-skin/AGENTS.md").read_text(encoding="utf-8"))
+        self.assertTrue((pictures_dir / "glow-skin_pics/staging").is_dir())
+        self.assertTrue((pictures_dir / "glow-skin_pics/uploaded").is_dir())
+        self.assertTrue((config_dir / "glow-skin/catalog-agent.env").is_file())
+
+        # 2. Existing user adding a 2nd store via the vault's bundled tools/new-niche.py
+        vault_new_niche = self.vault / "tools/new-niche.py"
+        res2 = run_cli(
+            vault_new_niche,
+            "--store",
+            "car-gadgets",
+            "--memory-dir",
+            str(self.vault),
+            "--projects-dir",
+            str(projects_dir),
+            "--pictures-dir",
+            str(pictures_dir),
+            "--config-dir",
+            str(config_dir),
+            "--store-template",
+            str(fake_template),
+            "--skip-npm",
+        )
+        self.assertEqual(res2.returncode, 0, msg=res2.stderr or res2.stdout)
+        self.assertTrue((self.vault / "01 Products/car-gadgets").is_dir())
+        self.assertTrue((self.vault / "02 Bases/car-gadgets_Marketing.base").is_file())
+        self.assertTrue((projects_dir / "car-gadgets/package.json").is_file())
+        self.assertTrue((config_dir / "car-gadgets/catalog-agent.env").is_file())
+
+        profile_text = (self.vault / "PROFILE.md").read_text(encoding="utf-8")
+        self.assertIn(str(projects_dir / "glow-skin"), profile_text)
+        self.assertIn(str(projects_dir / "car-gadgets"), profile_text)
+
+        verify_res = run_cli(VERIFY_SCRIPT, "--memory-dir", str(self.vault))
+        self.assertEqual(verify_res.returncode, 0, msg=verify_res.stdout)
 
 
 if __name__ == "__main__":

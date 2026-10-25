@@ -49,16 +49,34 @@ your-memory-vault/
 
 ---
 
-## Quick Start (1 Command)
+## Quick Start (1 Command — Brand-New User)
 
-Requirements: **Python 3.10+** and **Git**.
+Requirements: **Python 3.10+**, **Node.js 22+**, and **Git**.
+
+If you are a **brand-new user** starting from zero, clone only this repository and run `scripts/new-niche.py`:
 
 ```bash
 # 1. Clone this repository
-git clone https://github.com/YOUR_USERNAME/ai-memory-boilerplate.git
+git clone https://github.com/aammo1/ai-memory-boilerplate.git
 cd ai-memory-boilerplate
 
-# 2. Initialize your unified vault for your stores/niches and install the skill
+# 2. Initialize your unified vault + install all 4 skills + clone & configure your first store!
+python3 scripts/new-niche.py \
+  --store "glow-skin" \
+  --name "Your Name"
+```
+
+What `new-niche.py` does automatically:
+1. **If `~/Work/ai-memory` does not exist yet:** Runs `setup.py` to initialize the unified Obsidian vault and installs all 4 skills (`ai-memory-kit`, `morocco-cod-marketing`, `crm-catalog`, `product-page-marketing-sections`) into `~/.agents/skills/`.
+2. **Creates Product Pictures folders:** `~/Pictures/glow-skin_pics/staging/` and `uploaded/`.
+3. **Clones & configures [`store-crm-boilerplate`](https://github.com/aammo1/store-crm-boilerplate):** Clones into `~/Projects/glow-skin`, runs `npm install` + `npm run new-store`, extracts `CATALOG_AGENT_KEY` into `~/.config/glow-skin/catalog-agent.env` (`chmod 600`), and links `~/Projects/glow-skin/AGENTS.md` to your vault.
+4. **Wires real paths in `PROFILE.md`:** Updates `~/Work/ai-memory/PROFILE.md` with your real repository, pictures, and catalog env paths.
+
+---
+
+### Alternative: Initialize Vault Only (Without Cloning a Store Repo Yet)
+
+```bash
 python3 scripts/setup.py \
   --memory-dir "$HOME/Work/ai-memory" \
   --name "Your Name" \

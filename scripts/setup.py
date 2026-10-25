@@ -145,14 +145,16 @@ def copy_safe(src: Path, dest: Path, force: bool, dry_run: bool) -> str:
 
 
 def store_column_values(store: str, memory_dir: Path) -> dict[str, str]:
+    projects_dir = Path.home() / "Projects"
+    pictures_dir = Path.home() / "Pictures"
     return {
-        "**Store Code Repository**": f"`/path/to/{store}-repo`",
+        "**Store Code Repository**": f"`{projects_dir / store}`",
         "**Marketing Plans (`01 Products`)**": f"`01 Products/{store}/<product>.md`",
         "**Store Base Table (`02 Bases`)**": f"`02 Bases/{store}_Marketing.base`",
         "**Master Base Table (`02 Bases`)**": "`02 Bases/Products_Marketing.base`",
         "**Marketing Template (`00 Templates`)**": "`00 Templates/Product Template.md`",
         "**Product Cover Images (`03 Assets`)**": "`03 Assets/Product images/`",
-        "**Product Pictures Folder**": f"`/path/to/{store}_pics` (`staging/` & `uploaded/`)",
+        "**Product Pictures Folder**": f"`{pictures_dir / f'{store}_pics'}` (`staging/` & `uploaded/`)",
         "**Hero `01` Reference Image**": f"`{memory_dir}/03 Assets/Reference Heroes/{store}_hero_01.png`",
         "**Hero `01` Live Style URL**": f"`https://{store}.example.com`",
         "**Catalog API Env**": f"`~/.config/{store}/catalog-agent.env`",
@@ -403,9 +405,12 @@ def main() -> int:
     )
     print(write_safe(heroes_readme, heroes_text, args.force, args.dry_run))
 
-    # Copy tools/kie_generate.py and tools/test_kie_generate.py
+    # Copy tools/kie_generate.py, tools/test_kie_generate.py, and scripts/new-niche.py
     for tool_name in ["kie_generate.py", "test_kie_generate.py"]:
         print(copy_safe(TOOLS_DIR / tool_name, memory_dir / "tools" / tool_name, args.force, args.dry_run))
+    new_niche_src = REPO_ROOT / "scripts/new-niche.py"
+    if new_niche_src.is_file():
+        print(copy_safe(new_niche_src, memory_dir / "tools/new-niche.py", args.force, args.dry_run))
 
     # Configure .obsidian/ for out-of-the-box Bases + GoodBases (notion-table) + Templates + Property Types
     print(

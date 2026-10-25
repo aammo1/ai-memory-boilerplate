@@ -2,7 +2,7 @@
 
 ## Discovery
 
-- `capabilities` returns `{ version: 2, ... }` with supported operations and schema rules.
+- `capabilities` returns `{ schemaVersion: 2, ... }` with supported operations and schema rules (saved preview plans use `version: 2`).
 - `list` returns all active and archived products with their `optionDefinitions`, `variants`, galleries, and availability.
 - `show <id-or-slug>` returns one exact product.
 

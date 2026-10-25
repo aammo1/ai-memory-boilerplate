@@ -201,6 +201,8 @@ class GenerationRecoveryTests(unittest.TestCase):
         kie.main(["--product-dir", str(self.root), "--batch", str(batch_file)])
         self.assertEqual(self.state()["images"]["noir/01.png"]["status"], "completed")
         self.assertEqual(self.state()["images"]["ads_folder/ad_01.png"]["status"], "completed")
+        self.assertEqual(self.post.call_args_list[0].kwargs["json"]["input"]["aspect_ratio"], "1:1")
+        self.assertEqual(self.post.call_args_list[1].kwargs["json"]["input"]["aspect_ratio"], "4:5")
         self.assertEqual(self.post.call_count, 2)
         # Re-running the same batch skips both completed images without network calls
         self.post.reset_mock()
@@ -208,6 +210,16 @@ class GenerationRecoveryTests(unittest.TestCase):
         kie.main(["--product-dir", str(self.root), "--batch", str(batch_file)])
         self.post.assert_not_called()
         self.get.assert_not_called()
+
+    def test_ad_mode_defaults_to_4_5_and_explicit_aspect_overrides(self):
+        kie.main(["--product-dir", str(self.root), "--out", "ads_folder/ad_01.png",
+                  "--mode", "ad", "--prompt", "ad prompt", "--refs", str(self.ref)])
+        self.assertEqual(self.post.call_args.kwargs["json"]["input"]["aspect_ratio"], "4:5")
+        self.successful_download()
+        self.post.return_value = response({"data": {"taskId": "task-story"}})
+        kie.main(["--product-dir", str(self.root), "--out", "ads_folder/ad_story.png",
+                  "--mode", "ad", "--aspect", "9:16", "--prompt", "story prompt", "--refs", str(self.ref)])
+        self.assertEqual(self.post.call_args.kwargs["json"]["input"]["aspect_ratio"], "9:16")
 
 
 if __name__ == "__main__":

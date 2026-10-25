@@ -8,7 +8,7 @@ On the CRM server (or in `.env.local` / Coolify environment variables), set `CAT
 openssl rand -hex 32
 ```
 
-When `CATALOG_AGENT_KEY` is unset or shorter than 32 characters, `/api/catalog-agent` returns `503`. Note that `npm run new-store` automatically generates `CATALOG_AGENT_KEY` in `.env.local` and `.env.production.example`.
+When `CATALOG_AGENT_KEY` is unset or shorter than 32 characters, `/api/catalog-agent` returns `503`. Note that `npm run new-store` automatically generates and shares the same `CATALOG_AGENT_KEY` across `.env.local` and `.env.production.example` (and `new-niche.py` writes both `catalog-agent.env` for local dev and `catalog-agent.prod.env` when a production `https://` URL is present).
 
 ## 2. Client Environment File (`~/.config/<store>/catalog-agent.env`)
 

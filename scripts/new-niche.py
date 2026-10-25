@@ -45,9 +45,11 @@ BASE_COLUMNS = [
 
 
 def sanitize_slug(raw: str) -> str:
-    slug = re.sub(r"[^A-Za-z0-9_-]+", "-", raw.strip().lower()).strip("-")
-    if not slug:
-        raise ValueError(f"Invalid store/niche slug: {raw!r}")
+    slug = re.sub(r"[^a-z0-9-]+", "-", raw.strip().lower()).strip("-")[:40].rstrip("-")
+    if len(slug) < 2 or not re.fullmatch(r"[a-z0-9-]{2,40}", slug):
+        raise ValueError(
+            f"Invalid store/niche slug: {raw!r} (must normalize to 2-40 lowercase a-z, 0-9, or '-' characters)"
+        )
     return slug
 
 
@@ -279,31 +281,36 @@ def clone_store_boilerplate(template_src: str, repo_dir: Path) -> None:
     print(f"CREATED STORE REPO: {repo_dir}")
 
 
+def parse_env_catalog_values(env_file: Path) -> tuple[str, str]:
+    file_url = ""
+    file_key = ""
+    if not env_file.is_file():
+        return file_url, file_key
+    for line in env_file.read_text(encoding="utf-8", errors="ignore").splitlines():
+        stripped = line.strip()
+        if stripped.startswith("CATALOG_AGENT_KEY="):
+            val = stripped.split("=", 1)[1].strip().strip("\"'")
+            if len(val) >= 32:
+                file_key = val
+        elif stripped.startswith("CRM_PUBLIC_URL="):
+            val = stripped.split("=", 1)[1].strip().strip("\"'")
+            if val:
+                file_url = val
+    return file_url, file_key
+
+
 def extract_or_create_catalog_env(repo_dir: Path) -> tuple[str, str]:
     """Read CATALOG_AGENT_KEY and CRM_PUBLIC_URL from .env.local / .env / .env.production.example, or generate defaults."""
     key = ""
     url = ""
     for env_name in [".env.local", ".env", ".env.production.example"]:
-        env_file = repo_dir / env_name
-        if env_file.is_file():
-            file_key = ""
-            file_url = ""
-            for line in env_file.read_text(encoding="utf-8", errors="ignore").splitlines():
-                stripped = line.strip()
-                if stripped.startswith("CATALOG_AGENT_KEY="):
-                    val = stripped.split("=", 1)[1].strip().strip("\"'")
-                    if len(val) >= 32:
-                        file_key = val
-                elif stripped.startswith("CRM_PUBLIC_URL="):
-                    val = stripped.split("=", 1)[1].strip().strip("\"'")
-                    if val:
-                        file_url = val
-            if file_key and not key:
-                key = file_key
-            if file_url and not url:
-                url = file_url
-            if key and url:
-                break
+        file_url, file_key = parse_env_catalog_values(repo_dir / env_name)
+        if file_key and not key:
+            key = file_key
+        if file_url and not url:
+            url = file_url
+        if key and url:
+            break
     if not url:
         url = "http://localhost:3000"
     if not key:
@@ -316,6 +323,18 @@ def extract_or_create_catalog_env(repo_dir: Path) -> tuple[str, str]:
                     f.write("\n")
                 f.write(f"CATALOG_AGENT_KEY={key}\n")
     return url, key
+
+
+def extract_prod_catalog_env(repo_dir: Path) -> tuple[str, str]:
+    """Read production HTTPS URL and CATALOG_AGENT_KEY from .env.production.example (or domain in store.config.ts)."""
+    prod_url, prod_key = parse_env_catalog_values(repo_dir / ".env.production.example")
+    if not prod_url:
+        store_cfg = repo_dir / "store.config.ts"
+        if store_cfg.is_file():
+            m = re.search(r'domain:\s*"(https://[^"]+)"', store_cfg.read_text(encoding="utf-8", errors="ignore"))
+            if m and "example" not in m.group(1):
+                prod_url = m.group(1)
+    return prod_url, prod_key
 
 
 def write_catalog_env_file(catalog_env_path: Path, url: str, key: str) -> None:
@@ -435,8 +454,12 @@ def main() -> int:
             subprocess.run(new_store_cmd, cwd=str(repo_dir), check=True)
 
         url, key = extract_or_create_catalog_env(repo_dir)
-        live_url = url
+        prod_url, prod_key = extract_prod_catalog_env(repo_dir)
+        live_url = prod_url if prod_url.startswith("https://") else url
         write_catalog_env_file(catalog_env_path, url, key)
+        if prod_url.startswith("https://") and len(prod_key) >= 32:
+            prod_env_path = config_dir / store / "catalog-agent.prod.env"
+            write_catalog_env_file(prod_env_path, prod_url, prod_key)
         connect_repo_agents_md(repo_dir, memory_dir)
 
     # Step 4: Update PROFILE.md with exact real paths

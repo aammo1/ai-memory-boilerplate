@@ -141,8 +141,10 @@ package, video scripts and page brief all depend on the approved direction.
 - Only after approval, copy or download the image into
   `03 Assets/Product images`, preserving the source. Reuse an existing
   vault image without duplication.
-- Use `image-to-webp` when conversion is appropriate and that skill is
-  available; keep the source when converting.
+- If the optional `image-to-webp` skill is installed, use it when conversion is
+  appropriate; otherwise convert with local tools (`cwebp`, Python `Pillow`, or
+  `sharp`) or copy the approved source image directly into `03 Assets/Product images/`,
+  keeping the original source file intact.
 - Confirm the destination exists, then set a safely quoted, vault-relative
   wikilink: `cover: "[[03 Assets/Product images/example.webp]]"`.
 - On failure, retain the prior link or an empty value and report the actual

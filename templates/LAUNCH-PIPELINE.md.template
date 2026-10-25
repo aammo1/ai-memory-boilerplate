@@ -43,28 +43,30 @@ This pipeline works for **any store, brand, or niche** registered in `PROFILE.md
 
 Use `{{MEMORY_DIR}}/tools/kie_generate.py` (reads `KIE_API_KEY` from environment or `~/.config/kie/kie.env`). Include **only the user-selected slots** in `batch.json` (or single calls):
 ```bash
-# Single image:
+# Single image (when <store>_hero_01.png already exists):
 uv run --script "{{MEMORY_DIR}}/tools/kie_generate.py" \
   --product-dir "$product_dir" \
   --out noir/01.png \
   --mode store \
   --prompt "$approved_prompt" \
-  --refs "$product_reference" "{{MEMORY_DIR}}/03 Assets/Reference Heroes/{{FIRST_STORE}}_hero_01.png"
+  --refs "$product_reference" "{{MEMORY_DIR}}/03 Assets/Reference Heroes/<store>_hero_01.png"
 
 # Batch mode (only contains the exact slots the user chose to generate):
 uv run --script "{{MEMORY_DIR}}/tools/kie_generate.py" \
   --product-dir "$product_dir" \
   --batch "$product_dir/batch.json"
 ```
-- **`01` (Main Hero Picture):** Pass the color's reference photo + the store's Hero `01` reference image from `03 Assets/Reference Heroes/<store>_hero_01.png`.
-- **`02`, `03`... (Selected Gallery Shots):** Pass the color's reference photo(s) using only the gallery prompts the user picked.
+- **`01` (Main Hero Picture):**
+  - If `03 Assets/Reference Heroes/<store>_hero_01.png` exists, pass both the color/product reference photo + `<store>_hero_01.png`.
+  - **First-product bootstrap (new store):** If `03 Assets/Reference Heroes/<store>_hero_01.png` does **not** exist yet, pass **only** `--refs "$product_reference"`. Once the user approves `01.png` at Step 7, copy it to `{{MEMORY_DIR}}/03 Assets/Reference Heroes/<store>_hero_01.png` so all future products on that store inherit the same hero look.
+- **`02`, `03`... (Selected Gallery Shots):** Pass the color's reference photo(s) using only the gallery prompts the user picked (`1:1` default).
 - **Recovery:** If a task ends in `submitting` or `submission-unknown`, do NOT resubmit blindly. Reconcile in Kie.ai and run the same command with `--adopt-task-id <verified-id>`. Use `--retry-failed` only after a confirmed provider failure and user approval.
 
 ---
 
 ## Step 6 — Static Ads Generation (`ads_folder`)
 **Token-Saving Gate:** Even though the marketing note prepares 6 ad concepts/variations, ask the user **which specific ads (e.g., 2 or 4 out of the 6)** to actually generate on Kie.ai.
-1. Run `kie_generate.py` with `--mode ad` (or include only the chosen `"mode": "ad"` entries in `batch.json`) using the selected static-ad prompts and product reference photos, saving into `ads_folder/`.
+1. Run `kie_generate.py` with `--mode ad` (`4:5` aspect ratio is the automatic default for `ad` / `ad-flare`, matching `morocco-cod-marketing`; pass `--aspect 9:16` only when generating vertical Story/Reels placements) using the selected static-ad prompts and product reference photos, saving into `ads_folder/`.
 2. Create `ads_folder/ad-copy.md` with the **Primary Text**, **Headline**, and **Description** for the generated ads (keep on-image text separate).
 
 ---

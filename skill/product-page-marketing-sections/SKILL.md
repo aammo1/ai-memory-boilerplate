@@ -56,6 +56,8 @@ Add appropriate assets when they improve the composition: create lightweight dec
 
 Use a component or template partial whose CSS is isolated. Keep content data separate when the project already does so. Prefer static/server-rendered markup unless a genuine interaction requires client state. Do not add a dependency for decoration, scrolling, icons already available in the repo, or a simple FAQ.
 
+**`store-crm-boilerplate` repositories:** When working inside a `store-crm-boilerplate` store (`src/custom/` + `store.config.ts`), follow the exact 3-step `src/custom/` registration, `StoreImage` (`@/components/storefront/ui/store-image` — **never** `next/image`), `#commander` anchor, and `120 KiB` gzip budget rules in `references/integration-and-qa.md`.
+
 If another frontend skill is needed, retain this skill's mobile priority, strategy-led visual quality, and additive scope. Use its creative guidance where it fits the product and brand; avoid generic layouts or expanding into a complete storefront redesign.
 
 ## Mobile art direction

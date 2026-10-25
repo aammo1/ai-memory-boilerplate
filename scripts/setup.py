@@ -31,6 +31,12 @@ BUNDLED_STATIC_SKILLS = [
     "crm-catalog",
     "product-page-marketing-sections",
 ]
+HARNESS_SKILL_LOCATIONS = [
+    (".claude", "skills"),
+    (".codex", "skills"),
+    (".gemini/config", "skills"),
+    (".cursor", "skills"),
+]
 
 OBSIDIAN_CORE_PLUGINS = {
     "file-explorer": True,
@@ -111,9 +117,11 @@ BASE_COLUMNS = [
 
 
 def sanitize_slug(raw: str) -> str:
-    slug = re.sub(r"[^A-Za-z0-9_-]+", "-", raw.strip()).strip("-")
-    if not slug:
-        raise ValueError(f"Invalid store/niche slug: {raw!r}")
+    slug = re.sub(r"[^a-z0-9-]+", "-", raw.strip().lower()).strip("-")[:40].rstrip("-")
+    if len(slug) < 2 or not re.fullmatch(r"[a-z0-9-]{2,40}", slug):
+        raise ValueError(
+            f"Invalid store/niche slug: {raw!r} (must normalize to 2-40 lowercase a-z, 0-9, or '-' characters)"
+        )
     return slug
 
 
@@ -316,6 +324,77 @@ def scaffold_store(memory_dir: Path, store: str, base_tpl: Path, force: bool, dr
     return results
 
 
+def sync_harness_symlinks(
+    skills_root: Path,
+    harness_home: Path,
+    skill_names: list[str],
+    force: bool,
+    dry_run: bool,
+) -> list[str]:
+    results: list[str] = []
+    resolved_root = skills_root.resolve()
+    for config_rel, skills_sub in HARNESS_SKILL_LOCATIONS:
+        config_dir = harness_home / config_rel
+        if not config_dir.is_dir():
+            continue
+        target_skills_dir = config_dir / skills_sub
+        if target_skills_dir.exists() and target_skills_dir.resolve() == resolved_root:
+            continue
+        for skill_name in skill_names:
+            src_dir = (resolved_root / skill_name).resolve()
+            link_path = target_skills_dir / skill_name
+            if link_path.is_symlink():
+                try:
+                    same_target = link_path.resolve() == src_dir
+                except OSError:
+                    same_target = False
+                if same_target:
+                    results.append(f"SKIP (linked): {link_path} -> {src_dir}")
+                    continue
+                if not force:
+                    results.append(f"SKIP (exists): {link_path}")
+                    continue
+                if dry_run:
+                    results.append(f"WOULD LINK:    {link_path} -> {src_dir}")
+                    continue
+                link_path.unlink()
+                link_path.symlink_to(src_dir)
+                results.append(f"UPDATED LINK:  {link_path} -> {src_dir}")
+            elif link_path.exists():
+                results.append(f"SKIP (dir):    {link_path}")
+            else:
+                if dry_run:
+                    results.append(f"WOULD LINK:    {link_path} -> {src_dir}")
+                    continue
+                target_skills_dir.mkdir(parents=True, exist_ok=True)
+                link_path.symlink_to(src_dir)
+                results.append(f"LINKED:        {link_path} -> {src_dir}")
+    return results
+
+
+def install_bundled_skills(
+    skills_root: Path,
+    replacements: dict[str, str],
+    force: bool,
+    dry_run: bool,
+    harness_home: Path | None,
+) -> None:
+    skill_dest = skills_root / "ai-memory-kit/SKILL.md"
+    print(write_safe(skill_dest, render(SKILL_TEMPLATE, replacements), force, dry_run))
+    for static_skill in BUNDLED_STATIC_SKILLS:
+        src_dir = SKILLS_SRC_DIR / static_skill
+        if src_dir.is_dir():
+            for src_file in sorted(src_dir.rglob("*")):
+                if src_file.is_file():
+                    rel_path = src_file.relative_to(src_dir)
+                    dest_file = skills_root / static_skill / rel_path
+                    print(copy_safe(src_file, dest_file, force, dry_run))
+    if harness_home is not None:
+        all_skills = ["ai-memory-kit"] + BUNDLED_STATIC_SKILLS
+        for line in sync_harness_symlinks(skills_root, harness_home, all_skills, force, dry_run):
+            print(line)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Initialize or extend your unified AI Memory + Obsidian Marketing Vault."
@@ -336,15 +415,46 @@ def main() -> int:
         "--install-skills",
         dest="install_skill",
         action="store_true",
-        help="Install all 4 bundled skills (ai-memory-kit, morocco-cod-marketing, crm-catalog, product-page-marketing-sections) to ~/.agents/skills/",
+        help="Install all 4 bundled skills to --skills-dir and auto-link detected AI harnesses (Claude, Codex, Antigravity, Cursor)",
+    )
+    parser.add_argument(
+        "--update-skills",
+        action="store_true",
+        help="Refresh only the 4 bundled skills (and detected AI harness symlinks) without modifying existing vault notes",
     )
     parser.add_argument("--skills-dir", default=str(Path.home() / ".agents/skills"), help="Base skills directory (default: ~/.agents/skills)")
+    parser.add_argument("--harness-home", help="Optional home directory to scan for AI harness skill folders (defaults to ~ when using default --skills-dir)")
+    parser.add_argument("--no-harness-sync", action="store_true", help="Do not create skill symlinks in ~/.claude, ~/.codex, ~/.gemini/config, or ~/.cursor")
     parser.add_argument("--force", action="store_true", help="Overwrite existing files")
     parser.add_argument("--dry-run", action="store_true", help="Preview actions without writing to disk")
     args = parser.parse_args()
 
     memory_dir = Path(args.memory_dir).expanduser().resolve()
+    skills_root = Path(args.skills_dir).expanduser().resolve()
+    default_skills_root = (Path.home() / ".agents/skills").resolve()
+    harness_home: Path | None = None
+    if not args.no_harness_sync:
+        if args.harness_home:
+            harness_home = Path(args.harness_home).expanduser().resolve()
+        elif skills_root == default_skills_root:
+            harness_home = Path.home().resolve()
+
     base_tpl = TEMPLATES_DIR / "Products_Marketing.base.template"
+
+    if args.update_skills and not args.add_store and (memory_dir / "PROFILE.md").is_file() and not args.force:
+        existing_stores = discover_existing_stores(memory_dir)
+        fallback_stores = [sanitize_slug(s) for s in args.stores.split(",") if s.strip()] or ["store-a"]
+        first_store = existing_stores[0] if existing_stores else fallback_stores[0]
+        replacements = {
+            "USER_NAME": args.name,
+            "MEMORY_DIR": str(memory_dir),
+            "DATE": datetime.date.today().isoformat(),
+            "FIRST_STORE": first_store,
+        }
+        print(f"=== Refreshing 4 Bundled Skills in: {skills_root} ===")
+        install_bundled_skills(skills_root, replacements, True, args.dry_run, harness_home)
+        print("\nDone! All 4 skills refreshed without modifying vault notes.")
+        return 0
 
     if args.add_store:
         store_slug = sanitize_slug(args.add_store)
@@ -480,25 +590,21 @@ def main() -> int:
         subprocess.run(["git", "init", str(memory_dir)], check=False, stdout=subprocess.DEVNULL)
         print(f"GIT INIT:      {memory_dir}/.git")
 
-    if args.install_skill:
-        skills_root = Path(args.skills_dir).expanduser().resolve()
-        skill_dest = skills_root / "ai-memory-kit/SKILL.md"
-        print(write_safe(skill_dest, render(SKILL_TEMPLATE, replacements), args.force, args.dry_run))
-        for static_skill in BUNDLED_STATIC_SKILLS:
-            src_dir = SKILLS_SRC_DIR / static_skill
-            if src_dir.is_dir():
-                for src_file in sorted(src_dir.rglob("*")):
-                    if src_file.is_file():
-                        rel_path = src_file.relative_to(src_dir)
-                        dest_file = skills_root / static_skill / rel_path
-                        print(copy_safe(src_file, dest_file, args.force, args.dry_run))
+    if args.install_skill or args.update_skills:
+        install_bundled_skills(
+            skills_root,
+            replacements,
+            args.force or args.update_skills,
+            args.dry_run,
+            harness_home,
+        )
 
     print("\nDone! Next steps:")
-    print(f"  1. Open '{memory_dir}' directly in Obsidian (Bases, GoodBases & Templates are pre-configured).")
+    print(f"  1. Open '{memory_dir}' in Obsidian (>= 1.10.2) and enable Community Plugins if prompted so GoodBases renders 02 Bases/*.base.")
     print(f"  2. Edit {memory_dir}/PROFILE.md with your real store/project paths.")
-    print(f"  3. Drop your store hero reference images into '{memory_dir}/03 Assets/Reference Heroes/'.")
+    print(f"  3. Drop your store hero reference images into '{memory_dir}/03 Assets/Reference Heroes/' (or save your first approved 01.png there).")
     print(f"  4. Verify vault health: python3 scripts/verify.py --memory-dir \"{memory_dir}\"")
-    if args.install_skill:
+    if args.install_skill or args.update_skills:
         print("  5. In any folder on your machine, tell your AI: 'use ai-memory-kit'")
     return 0
 

@@ -245,6 +245,10 @@ def validate_target_file(product_dir: Path, out_str: str) -> tuple[str, Path]:
     return relative.as_posix(), target_file
 
 
+def default_aspect_for_mode(mode: str) -> str:
+    return "4:5" if mode in ("ad", "ad-flare") else "1:1"
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Crash-aware, serialized Kie.ai image generation")
     parser.add_argument("--product-dir", required=True, help="Root folder of the product in Pictures")
@@ -253,11 +257,12 @@ def main(argv=None):
     parser.add_argument("--mode", choices=["store", "ad", "ad-flare"], default="store",
                         help="store = nano-banana-2-1 | ad = gpt-image-2-5-sunburst-image-to-image")
     parser.add_argument("--prompt", help="Generation prompt")
-    parser.add_argument("--aspect", default="1:1", help="Aspect ratio (default 1:1)")
+    parser.add_argument("--aspect", default=None, help="Aspect ratio (defaults to 1:1 for store, 4:5 for ad/ad-flare)")
     parser.add_argument("--refs", nargs="+", help="1 or more local reference image paths or URLs")
     parser.add_argument("--adopt-task-id", help="Resume a verified task after an uncertain submission; never submits")
     parser.add_argument("--retry-failed", action="store_true", help="Explicitly authorize a new paid task after terminal failure")
     args = parser.parse_args(argv)
+    args.aspect = args.aspect or default_aspect_for_mode(args.mode)
     product_dir = Path(args.product_dir).resolve(strict=True)
     if not product_dir.is_dir():
         raise ValueError("Product directory must exist")
@@ -271,12 +276,13 @@ def main(argv=None):
             if not isinstance(item, dict) or not item.get("out") or not item.get("prompt") or not item.get("refs"):
                 raise ValueError("Each batch job requires 'out', 'prompt', and 'refs'")
             norm_out, target_file = validate_target_file(product_dir, item["out"])
+            mode = item.get("mode", "store")
             job_args = argparse.Namespace(
                 product_dir=str(product_dir),
                 out=norm_out,
-                mode=item.get("mode", "store"),
+                mode=mode,
                 prompt=item["prompt"],
-                aspect=item.get("aspect", "1:1"),
+                aspect=item.get("aspect") or default_aspect_for_mode(mode),
                 refs=item["refs"],
                 adopt_task_id=item.get("adopt_task_id"),
                 retry_failed=bool(item.get("retry_failed", False)),

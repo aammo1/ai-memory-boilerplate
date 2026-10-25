@@ -208,6 +208,11 @@ class UnifiedVaultTests(unittest.TestCase):
         env_text = (config_dir / "glow-skin/catalog-agent.env").read_text(encoding="utf-8")
         self.assertIn("CRM_CATALOG_URL=http://localhost:3000", env_text)
         self.assertIn("CRM_CATALOG_KEY=local_secret_key_at_least_32_chars_long_123", env_text)
+        prod_env_path = config_dir / "glow-skin/catalog-agent.prod.env"
+        self.assertTrue(prod_env_path.is_file())
+        prod_env_text = prod_env_path.read_text(encoding="utf-8")
+        self.assertIn("CRM_CATALOG_URL=https://prod.example.ma", prod_env_text)
+        self.assertIn("CRM_CATALOG_KEY=prod_secret_key_at_least_32_chars_long_456", prod_env_text)
 
         # 2. Existing user adding a 2nd store via the vault's bundled tools/new-niche.py
         vault_new_niche = self.vault / "tools/new-niche.py"
@@ -235,10 +240,63 @@ class UnifiedVaultTests(unittest.TestCase):
 
         profile_text = (self.vault / "PROFILE.md").read_text(encoding="utf-8")
         self.assertIn(str(projects_dir / "glow-skin"), profile_text)
+        self.assertIn("`https://prod.example.ma`", profile_text)
         self.assertIn(str(projects_dir / "car-gadgets"), profile_text)
 
         verify_res = run_cli(VERIFY_SCRIPT, "--memory-dir", str(self.vault))
         self.assertEqual(verify_res.returncode, 0, msg=verify_res.stdout)
+
+    def test_slug_normalization_harness_symlinks_and_update_skills(self):
+        harness_home = self.root / "fake-home"
+        for sub in [".claude", ".codex", ".gemini/config", ".cursor"]:
+            (harness_home / sub).mkdir(parents=True)
+
+        # Underscores & uppercase normalize cleanly to hyphenated lowercase; 1-char slug fails
+        bad = run_cli(SETUP_SCRIPT, "--memory-dir", str(self.vault), "--stores", "x")
+        self.assertNotEqual(bad.returncode, 0)
+
+        ok = run_cli(
+            SETUP_SCRIPT,
+            "--memory-dir",
+            str(self.vault),
+            "--name",
+            "Yassine",
+            "--stores",
+            "My_Brand",
+            "--skills-dir",
+            str(self.skills),
+            "--harness-home",
+            str(harness_home),
+            "--install-skill",
+        )
+        self.assertEqual(ok.returncode, 0, msg=ok.stderr or ok.stdout)
+        self.assertTrue((self.vault / "01 Products/my-brand").is_dir())
+
+        for sub in [".claude/skills", ".codex/skills", ".gemini/config/skills", ".cursor/skills"]:
+            for skill_name in ["ai-memory-kit", "morocco-cod-marketing", "crm-catalog", "product-page-marketing-sections"]:
+                link = harness_home / sub / skill_name
+                self.assertTrue(link.is_symlink(), msg=f"Missing symlink: {link}")
+                self.assertEqual(link.resolve(), (self.skills / skill_name).resolve())
+
+        # Modify a vault file and a skill file, then run --update-skills: skill refreshes, vault stays untouched
+        todo_path = self.vault / "TODO.md"
+        todo_path.write_text("# Custom User Todo\n", encoding="utf-8")
+        crm_skill = self.skills / "crm-catalog/SKILL.md"
+        crm_skill.write_text("stale content", encoding="utf-8")
+
+        upd = run_cli(
+            SETUP_SCRIPT,
+            "--memory-dir",
+            str(self.vault),
+            "--skills-dir",
+            str(self.skills),
+            "--harness-home",
+            str(harness_home),
+            "--update-skills",
+        )
+        self.assertEqual(upd.returncode, 0, msg=upd.stderr or upd.stdout)
+        self.assertEqual(todo_path.read_text(encoding="utf-8"), "# Custom User Todo\n")
+        self.assertIn("Store CRM Live Catalog", crm_skill.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

@@ -26,16 +26,16 @@ LAUNCH-PIPELINE.md                   <- End-to-end 10-step product launch SOP (S
 └── Reference Heroes/                <- Store Hero 01 style reference images for Kie.ai
 tools/
 ├── kie_generate.py                  <- Crash-safe, batch-capable Kie.ai image generator with flock locking
-├── test_kie_generate.py             <- 13 offline regression tests (zero API cost)
+├── test_kie_generate.py             <- 14 offline regression tests (zero API cost)
 └── new-niche.py                     <- One-command new store/niche scaffolder (vault + store-crm-boilerplate + secrets)
 ```
 
-## Installed Skills (`~/.agents/skills`)
+## Installed Skills (`~/.agents/skills` + Auto-Linked Harnesses)
 - `ai-memory-kit` — loads and updates this unified vault (`PROFILE.md`, `TODO.md`, `LAUNCH-PIPELINE.md`, `01 Products/`) on demand from any folder on the machine, and can onboard new stores/niches.
 - `morocco-cod-marketing` — builds emotionally grounded Meta ad packages (6 static ads, optional video scripts) and a product-page brief with 4 gallery prompts inside `01 Products/<store>/`.
-- `crm-catalog` — manages any `store-crm-boilerplate` live catalog (Contract v2) via `~/.config/<store>/catalog-agent.env`.
+- `crm-catalog` — manages any `store-crm-boilerplate` live catalog (Contract v2) via `~/.config/<store>/catalog-agent.env` (and `catalog-agent.prod.env` after Coolify deployment).
 - `product-page-marketing-sections` — creates persuasive mobile-first marketing sections (`src/custom/`) from the product note's brief while preserving checkout and JS budgets.
-- *(Optional)* `image-to-webp`, `coolify-deploy`, `meta-pixel-capi`, `git-checkpoint`.
+- *(Optional external skills, if installed separately)* `image-to-webp`, `coolify-deploy`, `meta-pixel-capi`, `git-checkpoint`.
 
 ## Preferences for Working with AI
 - **Simple, direct language:** No fluff. Use simple words, keep answers brief, and include a short dummy example when it helps.

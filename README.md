@@ -37,7 +37,7 @@ your-memory-vault/
 │   └── Reference Heroes/                # Store Hero 01 style reference images for Kie.ai
 └── tools/
     ├── kie_generate.py                  # Crash-safe, batch-capable Kie.ai image generator (with flock locking)
-    └── test_kie_generate.py             # 13 offline regression tests (zero API cost)
+    └── test_kie_generate.py             # 14 offline regression tests (zero API cost)
 ```
 
 ### Why This Unified Architecture Works Better
@@ -49,9 +49,15 @@ your-memory-vault/
 
 ---
 
-## Quick Start (1 Command — Brand-New User)
+## Quick Start (1 Command — Moroccan COD Operator)
 
-Requirements: **Linux, macOS, or Windows WSL2** (`kie_generate.py` uses Unix `fcntl.flock`), **Python 3.11+**, **Astral `uv`** (`curl -LsSf https://astral.sh/uv/install.sh | sh`), **Node.js 22+**, and **Git**.
+### Scope & Prerequisites
+- **Target Market:** Purpose-built for **Moroccan Cash-on-Delivery (COD)** e-commerce (`+212` mobile validation, integer `MAD`, `fr`/`ar` RTL storefront + French CRM back-office, Ozon Express Morocco or `mock` courier via [`store-crm-boilerplate`](https://github.com/aammo1/store-crm-boilerplate)).
+- **OS & Runtime:** **Linux, macOS, or Windows WSL2** (`kie_generate.py` uses Unix `fcntl.flock`), **Python 3.11+**, **Astral `uv`** (`curl -LsSf https://astral.sh/uv/install.sh | sh`), **Node.js 22+**, and **Git**.
+- **Obsidian (`>= 1.10.2`):** On first vault open, click *Settings → Community plugins → Turn on community plugins* so the pre-bundled **GoodBases** (`notion-table`) plugin renders `02 Bases/*.base`.
+- **Optional Paid / External Integrations:**
+  - **Steps 4–6 (AI Gallery & Static Ads):** Put `KIE_API_KEY=<your-key>` inside `~/.config/kie/kie.env` (`chmod 600`).
+  - **Step 10 (Paused Meta Ads Drafts):** Requires a configured Meta Ads MCP server in your AI client (Steps 0–9 work without it).
 
 If you are a **brand-new user** starting from zero, clone only this repository and run `scripts/new-niche.py`:
 
@@ -67,10 +73,10 @@ python3 scripts/new-niche.py \
 ```
 
 What `new-niche.py` does automatically:
-1. **If `~/Work/ai-memory` does not exist yet:** Runs `setup.py` to initialize the unified Obsidian vault and installs all 4 skills (`ai-memory-kit`, `morocco-cod-marketing`, `crm-catalog`, `product-page-marketing-sections`) into `~/.agents/skills/`.
+1. **If `~/Work/ai-memory` does not exist yet:** Runs `setup.py` to initialize the unified Obsidian vault, installs all 4 skills (`ai-memory-kit`, `morocco-cod-marketing`, `crm-catalog`, `product-page-marketing-sections`) into `~/.agents/skills/`, and **auto-symlinks** them into any detected AI harness on your machine (`~/.claude/skills`, `~/.codex/skills`, `~/.gemini/config/skills` for Antigravity, `~/.cursor/skills`).
 2. **Creates Product Pictures folders:** `~/Pictures/glow-skin_pics/staging/` and `uploaded/`.
-3. **Clones & configures [`store-crm-boilerplate`](https://github.com/aammo1/store-crm-boilerplate):** Clones into `~/Projects/glow-skin`, runs `npm install` + `npm run new-store`, extracts `CATALOG_AGENT_KEY` into `~/.config/glow-skin/catalog-agent.env` (`chmod 600`), and links `~/Projects/glow-skin/AGENTS.md` to your vault.
-4. **Wires real paths in `PROFILE.md`:** Updates `~/Work/ai-memory/PROFILE.md` with your real repository, pictures, and catalog env paths.
+3. **Clones & configures [`store-crm-boilerplate`](https://github.com/aammo1/store-crm-boilerplate):** Clones into `~/Projects/glow-skin`, runs `npm install` + `npm run new-store` (sharing `CATALOG_AGENT_KEY` across `.env.local` and `.env.production.example`), writes `~/.config/glow-skin/catalog-agent.env` + `catalog-agent.prod.env` (`chmod 600`), and links `~/Projects/glow-skin/AGENTS.md` to your vault.
+4. **Wires real paths in `PROFILE.md`:** Updates `~/Work/ai-memory/PROFILE.md` with your real repository, production URL, pictures, and catalog env paths.
 
 ---
 
@@ -94,7 +100,11 @@ What `setup.py` does:
   - `.obsidian/` settings so Obsidian **Bases** and **Templates** work out of the box
 - Copies `tools/kie_generate.py`, `tools/test_kie_generate.py`, and `scripts/new-niche.py` into `<vault>/tools/` (never overwrites existing files unless `--force` is passed).
 - Initializes a Git repository inside `$HOME/Work/ai-memory`.
-- Installs all 4 bundled skills (`ai-memory-kit`, `morocco-cod-marketing`, `crm-catalog`, `product-page-marketing-sections`) into `~/.agents/skills/` (pass `--skills-dir ~/.claude/skills` if your AI harness reads from another skills directory).
+- Installs all 4 bundled skills (`ai-memory-kit`, `morocco-cod-marketing`, `crm-catalog`, `product-page-marketing-sections`) into `~/.agents/skills/` and auto-symlinks detected AI harnesses (`~/.claude/skills`, `~/.codex/skills`, `~/.gemini/config/skills`, `~/.cursor/skills`).
+- After pulling updates to this repo, refresh installed skills anytime without touching your vault notes:
+  ```bash
+  python3 scripts/setup.py --memory-dir "$HOME/Work/ai-memory" --update-skills
+  ```
 
 ### Adding a New Store or Niche Later (Via the Skill)
 
@@ -109,10 +119,10 @@ The `ai-memory-kit` skill automatically creates `01 Products/new-brand/`, create
 # Verify required files, marketing folders, YAML schema keys, cover image links, and secret leaks
 python3 scripts/verify.py --memory-dir "$HOME/Work/ai-memory"
 
-# Run offline unit tests for vault setup & verification (4 tests)
+# Run offline unit tests for vault setup, harness symlinks & verification (6 tests)
 python3 scripts/test_vault.py
 
-# Run offline unit tests for the Kie.ai batch & recovery generator (13 tests, 0 API calls)
+# Run offline unit tests for the Kie.ai batch & recovery generator (14 tests, 0 API calls)
 uv run --script tools/test_kie_generate.py
 ```
 
@@ -182,7 +192,7 @@ ai-memory-boilerplate/
 │   └── obsidian/plugins/good-bases/           # Bundled GoodBases (notion-table) Obsidian plugin
 └── tools/
     ├── kie_generate.py                        # Crash-safe, batch-capable Kie.ai image generator
-    └── test_kie_generate.py                   # 13 offline unit tests for recovery, locking, and batch mode
+    └── test_kie_generate.py                   # 14 offline unit tests for recovery, locking, and batch mode
 ```
 
 ## License

@@ -41,7 +41,7 @@ node --env-file="$HOME/.config/<store>/catalog-agent.env" "$HOME/.agents/skills/
 node --env-file="$HOME/.config/<store>/catalog-agent.env" "$HOME/.agents/skills/crm-catalog/scripts/catalog-agent-client.mjs" show <exact-id-or-slug>
 ```
 
-Always check live `capabilities` (`version: 2`) and current product state before drafting an operation.
+Always check live `capabilities` (`schemaVersion: 2`) and current product state before drafting an operation.
 
 ### 2. Gather and prepare
 

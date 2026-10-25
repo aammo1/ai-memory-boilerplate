@@ -161,6 +161,20 @@ class UnifiedVaultTests(unittest.TestCase):
         pictures_dir = self.root / "Pictures"
         config_dir = self.root / "config"
 
+        # Pre-seed .env.local and .env.production.example in the target repo to verify .env.local takes priority
+        glow_repo = projects_dir / "glow-skin"
+        glow_repo.mkdir(parents=True)
+        (glow_repo / "AGENTS.md").write_text("# Store CRM Template\n", encoding="utf-8")
+        (glow_repo / "package.json").write_text('{"name": "store-crm-boilerplate"}\n', encoding="utf-8")
+        (glow_repo / ".env.local").write_text(
+            'CRM_PUBLIC_URL="http://localhost:3000"\nCATALOG_AGENT_KEY="local_secret_key_at_least_32_chars_long_123"\n',
+            encoding="utf-8",
+        )
+        (glow_repo / ".env.production.example").write_text(
+            'CRM_PUBLIC_URL="https://prod.example.ma"\nCATALOG_AGENT_KEY="prod_secret_key_at_least_32_chars_long_456"\n',
+            encoding="utf-8",
+        )
+
         # 1. Brand-new user (vault does not exist yet!)
         res1 = run_cli(
             NEW_NICHE_SCRIPT,
@@ -191,6 +205,9 @@ class UnifiedVaultTests(unittest.TestCase):
         self.assertTrue((pictures_dir / "glow-skin_pics/staging").is_dir())
         self.assertTrue((pictures_dir / "glow-skin_pics/uploaded").is_dir())
         self.assertTrue((config_dir / "glow-skin/catalog-agent.env").is_file())
+        env_text = (config_dir / "glow-skin/catalog-agent.env").read_text(encoding="utf-8")
+        self.assertIn("CRM_CATALOG_URL=http://localhost:3000", env_text)
+        self.assertIn("CRM_CATALOG_KEY=local_secret_key_at_least_32_chars_long_123", env_text)
 
         # 2. Existing user adding a 2nd store via the vault's bundled tools/new-niche.py
         vault_new_niche = self.vault / "tools/new-niche.py"

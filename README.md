@@ -51,7 +51,7 @@ your-memory-vault/
 
 ## Quick Start (1 Command — Brand-New User)
 
-Requirements: **Python 3.10+**, **Node.js 22+**, and **Git**.
+Requirements: **Linux, macOS, or Windows WSL2** (`kie_generate.py` uses Unix `fcntl.flock`), **Python 3.11+**, **Astral `uv`** (`curl -LsSf https://astral.sh/uv/install.sh | sh`), **Node.js 22+**, and **Git**.
 
 If you are a **brand-new user** starting from zero, clone only this repository and run `scripts/new-niche.py`:
 
@@ -92,9 +92,9 @@ What `setup.py` does:
   - `02 Bases/Products_Marketing.base` (master table) + `02 Bases/<store>_Marketing.base` (per-store tables)
   - `03 Assets/Product images/` and `03 Assets/Reference Heroes/`
   - `.obsidian/` settings so Obsidian **Bases** and **Templates** work out of the box
-- Copies `tools/kie_generate.py` and `tools/test_kie_generate.py` (never overwrites existing files unless `--force` is passed).
+- Copies `tools/kie_generate.py`, `tools/test_kie_generate.py`, and `scripts/new-niche.py` into `<vault>/tools/` (never overwrites existing files unless `--force` is passed).
 - Initializes a Git repository inside `$HOME/Work/ai-memory`.
-- Installs the **`ai-memory-kit`** skill into `~/.agents/skills/ai-memory-kit/SKILL.md`.
+- Installs all 4 bundled skills (`ai-memory-kit`, `morocco-cod-marketing`, `crm-catalog`, `product-page-marketing-sections`) into `~/.agents/skills/` (pass `--skills-dir ~/.claude/skills` if your AI harness reads from another skills directory).
 
 ### Adding a New Store or Niche Later (Via the Skill)
 
@@ -163,9 +163,10 @@ ai-memory-boilerplate/
 ├── README.md                                  # Documentation
 ├── LICENSE                                    # MIT License
 ├── scripts/
+│   ├── new-niche.py                           # One-command launcher (vault + 4 skills + store-crm-boilerplate)
 │   ├── setup.py                               # CLI installer (--stores, --add-store, --install-skill)
 │   ├── verify.py                              # Health, frontmatter, cover-link & secret-leak checker
-│   └── test_vault.py                          # Offline unit tests for setup.py and verify.py
+│   └── test_vault.py                          # Offline unit tests for setup.py, verify.py, and new-niche.py
 ├── skill/
 │   ├── ai-memory-kit/                         # On-demand unified vault & pipeline skill
 │   ├── morocco-cod-marketing/                 # Moroccan COD ad package & page-brief skill

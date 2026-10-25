@@ -34,8 +34,9 @@ Resolve an existing note in this order: exact stored product ID or source URL,
 exact factual product identity, then exact filename. A translated marketing
 name or fuzzy similarity is never enough to authorize resume or overwrite.
 When no exact note exists, propose a filesystem-safe filename based on the
-factual identity, show the complete path, and check for a collision. When zero
+factual identity (or the customer-facing marketing name if already approved or specified in `PROFILE.md`), show the complete path, and check for a collision. When zero
 or multiple matches remain plausible, ask the user before writing.
+If `PROFILE.md` requires the note filename and H1 title to match the approved marketing product name (chosen at Checkpoint 2), rename the note file to `<MARKETING_NAME>.md` and update its H1 title immediately upon Checkpoint 2 approval while keeping the factual catalog identity in the note body.
 
 ## New-note initialization
 

@@ -196,7 +196,7 @@ single element without re-approving the rest; iterate only on what they
 dispute.
 
 Save only the approved exact live labels; never write invented labels. Save
-the direction immediately after approval, following the persistence contract.
+the direction immediately after approval, following the persistence contract (including renaming the note file and H1 to the approved marketing product name if specified in `PROFILE.md`).
 
 Fear, jealousy or shock may be considered only when the danger is truthful,
 proportionate and relevant; they are never defaults.

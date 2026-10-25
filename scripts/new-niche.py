@@ -280,22 +280,32 @@ def clone_store_boilerplate(template_src: str, repo_dir: Path) -> None:
 
 
 def extract_or_create_catalog_env(repo_dir: Path) -> tuple[str, str]:
-    """Read CATALOG_AGENT_KEY and CRM_PUBLIC_URL from .env.local / .env.production.example, or generate defaults."""
+    """Read CATALOG_AGENT_KEY and CRM_PUBLIC_URL from .env.local / .env / .env.production.example, or generate defaults."""
     key = ""
-    url = "http://localhost:3000"
-    for env_name in [".env.local", ".env.production.example", ".env"]:
+    url = ""
+    for env_name in [".env.local", ".env", ".env.production.example"]:
         env_file = repo_dir / env_name
         if env_file.is_file():
+            file_key = ""
+            file_url = ""
             for line in env_file.read_text(encoding="utf-8", errors="ignore").splitlines():
                 stripped = line.strip()
                 if stripped.startswith("CATALOG_AGENT_KEY="):
                     val = stripped.split("=", 1)[1].strip().strip("\"'")
                     if len(val) >= 32:
-                        key = val
+                        file_key = val
                 elif stripped.startswith("CRM_PUBLIC_URL="):
                     val = stripped.split("=", 1)[1].strip().strip("\"'")
                     if val:
-                        url = val
+                        file_url = val
+            if file_key and not key:
+                key = file_key
+            if file_url and not url:
+                url = file_url
+            if key and url:
+                break
+    if not url:
+        url = "http://localhost:3000"
     if not key:
         key = secrets.token_hex(32)
         env_local = repo_dir / ".env.local"

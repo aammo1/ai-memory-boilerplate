@@ -20,6 +20,14 @@
     "category": "maison",
     "price": 249,
     "description": "Un diffuseur compact pour parfumer votre intérieur.",
+    "story": "Conçu pour s'intégrer discrètement sur un bureau ou une table de chevet.",
+    "materials": ["ABS sans BPA", "Arrêt automatique", "Silencieux (< 30 dB)"],
+    "badge": "Nouveau",
+    "isBestSeller": true,
+    "landingEnabled": true,
+    "packs": [
+      { "quantity": 2, "price": 449, "label": "Pack Duo", "highlight": true }
+    ],
     "images": ["./staging/DIFFUSEUR/standard/01.png", "./staging/DIFFUSEUR/standard/02.png"],
     "variants": [
       { "key": "standard", "options": [] }
@@ -70,6 +78,7 @@
 ### Creation Rules
 - `data.variants[].key` is required when `variants` is provided: 1–100 ASCII alphanumeric, `_`, or `-` characters, unique within the request. `id` is forbidden on creation.
 - `data.initialStock` accepts only `{ variantKey, qty }`. Every `variantKey` must match a declared variant `key`. Quantities are non-negative safe integers opened at location `MAIN` inside the creation transaction.
+- Optional product fields: `story` (string, up to 20,000 chars), `materials` (array of up to 50 short feature/material strings), `badge` (string or null), `isBestSeller` (boolean), `upsellRef` (product ID/slug or null), `landingEnabled` (boolean, enables `/l/<slug>`), and `packs` (up to 4 quantity bundles `{ quantity: 2..10, price: <int MAD below regular>, label?: string, highlight?: boolean }`).
 - Preview and applied receipts return `variantIds: { [key]: serverVariantId }`. Only the applied receipt contains persistent database variant IDs.
 - Option values are always strings (including `"36"`, `"XL"`, `"500 ml"`). Up to 3 option axes and 100 variants per product.
 

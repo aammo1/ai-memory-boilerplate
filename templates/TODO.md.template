@@ -1,11 +1,11 @@
 # Active Priorities & Task Queue
 
-Single queue of open work. Detailed per-item workflow execution status lives in that item's `state.json`.
+Single queue of open work. Detailed per-product execution status lives in that product's `launch-state.json`.
 
 ## Open Tasks
-- [ ] **[project-a] Customize `PROFILE.md`:** Fill in real repository and asset paths in `{{MEMORY_DIR}}/PROFILE.md`.
-- [ ] **[project-a] Customize `PIPELINE.md`:** Adapt the multi-step workflow in `{{MEMORY_DIR}}/PIPELINE.md` to your exact stack or business flow.
+- [ ] **[meta] Configure `PROFILE.md`:** Replace placeholder paths in `{{MEMORY_DIR}}/PROFILE.md` with your real store/project directories and add your Hero `01` reference images into `03 - Reference Heroes/`.
+- [ ] **[store-a] Run Pilot Product #1:** Follow `LAUNCH-PIPELINE.md` Steps 0–10 with `launch-state.json` tracking.
 - [ ] **[meta] Off-Device Backup:** Add a remote Git repository (`git remote add origin ...`) to `{{MEMORY_DIR}}` and push.
 
 ## Recent Log (Completed)
-- **{{DATE}}:** Initialized 3-file external memory system (`PROFILE.md`, `TODO.md`, `PIPELINE.md` + `AGENTS.md`).
+- **{{DATE}}:** Initialized Git-tracked 3-file memory vault (`PROFILE.md`, `TODO.md`, `LAUNCH-PIPELINE.md` + `AGENTS.md` + `tools/kie_generate.py`).

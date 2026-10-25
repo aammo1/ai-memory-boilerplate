@@ -1,0 +1,90 @@
+# End-to-End Product Launch Pipeline (Steps 0 to 10)
+
+Read this entire file before starting or resuming any product launch.
+This pipeline works for **any store or project** registered in `PROFILE.md`.
+
+## Boot Chain
+1. Read `PROFILE.md` (to get the target store's repo path, marketing vault path, pictures folder, Hero `01` reference image, and catalog env) and `TODO.md`.
+2. Read the target skill files (`SKILL.md`) named in the active step below in full.
+3. Read the product's marketing note inside the target store's marketing vault and its `launch-state.json`.
+
+---
+
+## Step 0 — Resume / State Check
+1. Locate the product folder in the target store's `staging/` OR `uploaded/` directory (e.g. `<store_pictures_folder>/staging/<product_name>`).
+2. If `launch-state.json` exists, validate `store`, `marketing_note`, and `product_dir`, then resume at the first `pending` or `blocked` step. Never repeat completed image generation or catalog creation.
+3. **Locking:** All updates to `launch-state.json` must hold an exclusive `flock` on `<product_dir>/.launch-state.lock`, re-read current JSON, and replace atomically via a same-directory temp file (`kie_generate.py` handles this automatically for image slots).
+
+---
+
+## Step 1 & 2 — Reference Photos & Marketing Plan
+1. Confirm target store (from `PROFILE.md`, e.g., `store-a`, `store-b`, or any new store) and locate downloaded supplier/Telegram photos.
+2. Target the store's Obsidian marketing vault path directly (from `PROFILE.md`).
+3. Invoke your marketing skill (or create `01 Products/<product_name>.md` in the target store vault) with the reference photos path and embed full color-agnostic production prompts for both the static ads and the product gallery.
+
+---
+
+## Step 3 — Create Product Picture Folder Tree
+1. Using the marketing product name, create the staging folder inside the target store's Product Pictures Folder (from `PROFILE.md`):
+   - `<store_pictures_folder>/staging/<product_name>/`
+2. Create one subfolder per color variant (e.g., `noir/`, `marron/`, `blanc/`) + `ads_folder/`.
+3. Initialize `<product_name>/launch-state.json` and link its path in `TODO.md`.
+
+---
+
+## Step 4 & 5 — AI Store Gallery Generation (Kie.ai Nano Banana 2.1, 1K, 1:1)
+**Token-Saving Gate:** Before generating anything, ask the user **how many and which gallery positions** to generate per color (for example: just `01` Hero + 1 or 2 positions instead of all 4). Never assume all prompts in the marketing note should be generated.
+
+Use `{{MEMORY_DIR}}/tools/kie_generate.py` (reads `KIE_API_KEY` from environment or `~/.config/kie/kie.env`). Include **only the user-selected slots** in `batch.json` (or single calls):
+```bash
+# Single image:
+uv run --script "{{MEMORY_DIR}}/tools/kie_generate.py" \
+  --product-dir "$product_dir" \
+  --out noir/01.png \
+  --mode store \
+  --prompt "$approved_prompt" \
+  --refs "$product_reference" "{{MEMORY_DIR}}/03 - Reference Heroes/store_a_hero_01.png"
+
+# Batch mode (only contains the exact slots the user chose to generate):
+uv run --script "{{MEMORY_DIR}}/tools/kie_generate.py" \
+  --product-dir "$product_dir" \
+  --batch "$product_dir/batch.json"
+```
+- **`01` (Main Hero Picture):** Pass the color's reference photo + the store's Hero `01` reference image from `03 - Reference Heroes/`.
+- **`02`, `03`... (Selected Gallery Shots):** Pass the color's reference photo(s) using only the gallery prompts the user picked.
+- **Recovery:** If a task ends in `submitting` or `submission-unknown`, do NOT resubmit blindly. Reconcile in Kie.ai and run the same command with `--adopt-task-id <verified-id>`. Use `--retry-failed` only after a confirmed provider failure and user approval.
+
+---
+
+## Step 6 — Static Ads Generation (`ads_folder`)
+**Token-Saving Gate:** Even though the marketing note prepares 6 ad concepts/variations, ask the user **which specific ads (e.g., 2 or 4 out of the 6)** to actually generate on Kie.ai.
+1. Run `kie_generate.py` with `--mode ad` (or include only the chosen `"mode": "ad"` entries in `batch.json`) using the selected static-ad prompts and product reference photos, saving into `ads_folder/`.
+2. Create `ads_folder/ad-copy.md` with the **Primary Text**, **Headline**, and **Description** for the generated ads (keep on-image text separate).
+
+---
+
+## Step 7 — Ad Copy and Asset Review (Hard Stop)
+Show the user the generated gallery images and `ads_folder/` visuals + `ad-copy.md`. Wait for explicit approval before touching the live catalog, then set `"step7_approved": true` in `launch-state.json`.
+
+---
+
+## Step 8 — Live Catalog Creation
+1. Verify `"step7_approved": true` and confirm the store's catalog API origin matches `PROFILE.md`.
+2. Upload **only** the color variant folders with constraint: **"dont touch the ads_folder"**.
+3. Follow `preview` -> user approval -> `apply`. Save request ID, receipt, product ID, slug, and live URL in `launch-state.json`.
+4. Move the product folder from `staging/<product_name>` to `uploaded/<product_name>` and update `product_dir` in `launch-state.json` and `TODO.md`.
+
+---
+
+## Step 9 — Product Page Marketing Sections
+1. Open the target store's **Code Repository** (from `PROFILE.md`).
+2. Design custom product-page marketing sections using the live product URL/slug and marketing note path.
+3. Confirm proposed code changes with the user first (Rule 2), implement, and run `npm run lint`, `npx tsc --noEmit`, and `npm run build`.
+4. After explicit deployment approval, deploy and verify the live product page and checkout controls.
+
+---
+
+## Step 10 — Meta Ads Draft Creation (Meta Ads MCP)
+Requires verified Step 9 live deployment and configured Meta Ads MCP.
+1. Upload visuals from `ads_folder/` and attach Primary Text, Headline, and Description from `ads_folder/ad-copy.md` with the verified live product URL.
+2. Set Campaign `objective: "OUTCOME_SALES"` and set Campaign, Ad Set, and Ad statuses to `"PAUSED"`. Read back statuses to confirm; never activate automatically.

@@ -12,10 +12,14 @@ Most AI memory setups fail because they force models to maintain 6+ folders, str
 
 ```text
 your-memory-folder/
-├── AGENTS.md        # Boot rules when opening the memory folder directly
-├── PROFILE.md       # Who you are, your projects/paths table, and AI style rules
-├── TODO.md          # Single open task queue + recent completed changelog
-└── PIPELINE.md      # Reusable multi-step workflow SOP (with resumable state.json)
+├── AGENTS.md                # Boot rules when opening the memory folder directly
+├── PROFILE.md               # Identity, store/project paths table, and AI style rules
+├── TODO.md                  # Single open task queue + recent completed changelog
+├── LAUNCH-PIPELINE.md       # End-to-end 10-step product launch SOP (Steps 0 to 10)
+├── 03 - Reference Heroes/   # Store Hero 01 style reference images
+└── tools/
+    ├── kie_generate.py      # Crash-safe, batch-capable Kie.ai image generator (with flock locking)
+    └── test_kie_generate.py # 13 offline regression tests (zero API cost)
 ```
 
 ### Why This Architecture Works Better
@@ -40,9 +44,14 @@ python3 scripts/setup.py --memory-dir "$HOME/Work/ai-memory" --name "Your Name" 
 ```
 
 What `setup.py` does:
-- Creates `$HOME/Work/ai-memory` with `AGENTS.md`, `PROFILE.md`, `TODO.md`, and `PIPELINE.md` (never overwrites existing files unless `--force` is passed).
+- Creates `$HOME/Work/ai-memory` with `AGENTS.md`, `PROFILE.md`, `TODO.md`, `LAUNCH-PIPELINE.md`, `03 - Reference Heroes/`, and `tools/kie_generate.py` (never overwrites existing files unless `--force` is passed).
 - Initializes a Git repository inside `$HOME/Work/ai-memory`.
 - Installs the **`ai-memory-kit`** skill into `~/.agents/skills/ai-memory-kit/SKILL.md` pointing to your new memory folder.
+
+```bash
+# Run offline unit tests for the Kie.ai batch & recovery generator (13 tests, 0 API calls)
+uv run --script tools/test_kie_generate.py
+```
 
 ---
 
@@ -62,7 +71,7 @@ If you want a specific project repository to load your memory automatically ever
 Shared cross-session memory lives in ~/Work/ai-memory:
 - System Map & Preferences: ~/Work/ai-memory/PROFILE.md
 - Open Tasks & Log: ~/Work/ai-memory/TODO.md
-- Standard Workflow Pipeline: ~/Work/ai-memory/PIPELINE.md
+- 10-Step Product Launch SOP: ~/Work/ai-memory/LAUNCH-PIPELINE.md
 ```
 
 ### 3. Direct Memory Management
@@ -70,17 +79,14 @@ Open your `$HOME/Work/ai-memory` folder directly in your AI tool or Obsidian to 
 
 ---
 
-## Customizing `PIPELINE.md` for Your Domain
+## Customizing `LAUNCH-PIPELINE.md` for Your Domain
 
-`templates/PIPELINE.md` includes a ready-to-adapt multi-step workflow with:
-- **Step 0 (Resume & State Check):** Reads a per-item `state.json` so interrupted runs never repeat completed work.
-- **Cost / Token Gate:** Requires the agent to ask which specific items/variations to generate before spending external API credits.
-- **Human Review & Live Deployment Gates:** Requires explicit user confirmation before mutating live production systems or source code.
-
-You can adapt the steps in `PIPELINE.md` for:
-- **E-Commerce Product Launches** (Research -> Creative assets -> Catalog upload -> Landing page -> Ad drafts)
-- **SaaS Feature Shipping** (Spec -> DB migration -> Backend API -> UI -> E2E tests -> Prod deploy)
-- **Content / Agency Pipelines** (Brief -> Draft -> Visuals -> Review -> Publish)
+`templates/LAUNCH-PIPELINE.md.template` includes the complete **10-step E-Commerce Product Launch Pipeline (Steps 0 to 10)** with:
+- **Step 0 (Resume & State Check):** Reads a per-product `launch-state.json` under an exclusive `flock` lock so interrupted runs never repeat completed work.
+- **Step 1 & 2 (Photos & Marketing Plan):** Direct per-store Obsidian marketing vault targeting (no fragile symlinks).
+- **Step 3 (Staging Folder Tree):** Standardized `staging/<product_name>/` + color variant subfolders + `ads_folder/`.
+- **Steps 4, 5 & 6 (Kie.ai Gallery & Static Ads + Token-Saving Gate):** Includes `tools/kie_generate.py` (supports single-image and `--batch` mode, input SHA-256 fingerprinting, `--adopt-task-id`, and `--retry-failed`) and always asks which specific gallery positions and ads to generate before spending API credits.
+- **Steps 7, 8, 9 & 10 (Review Gate -> Catalog -> Landing Page Sections -> Paused Meta Ads Drafts):** Hard human approval stops before live catalog uploads, code changes, deployments, or ad creation.
 
 ---
 
@@ -88,19 +94,22 @@ You can adapt the steps in `PIPELINE.md` for:
 
 ```text
 ai-memory-boilerplate/
-├── README.md                        # Documentation
-├── LICENSE                          # MIT License
+├── README.md                              # Documentation
+├── LICENSE                                # MIT License
 ├── scripts/
-│   ├── setup.py                     # Interactive / CLI installer
-│   └── verify.py                    # Read-only health & secret-leak checker
+│   ├── setup.py                           # CLI installer (creates memory folder, copies tools, installs skill)
+│   └── verify.py                          # Read-only health & secret-leak checker
 ├── skill/
 │   └── ai-memory-kit/
-│       └── SKILL.md.template        # On-demand skill template for ~/.agents/skills/
-└── templates/
-    ├── AGENTS.md.template           # Memory workspace boot instructions
-    ├── PROFILE.md.template          # Identity, project paths table, and AI preferences
-    ├── TODO.md.template             # Open tasks queue and recent completed log
-    └── PIPELINE.md.template         # Adaptable multi-step workflow with state.json tracking
+│       └── SKILL.md.template              # On-demand skill template for ~/.agents/skills/
+├── templates/
+│   ├── AGENTS.md.template                 # Memory workspace boot instructions
+│   ├── PROFILE.md.template                # Identity, store/project paths table, and AI preferences
+│   ├── TODO.md.template                   # Open tasks queue and recent completed log
+│   └── LAUNCH-PIPELINE.md.template        # Full 10-step product launch pipeline (Steps 0 to 10)
+└── tools/
+    ├── kie_generate.py                    # Crash-safe, batch-capable Kie.ai image generator
+    └── test_kie_generate.py               # 13 offline unit tests for recovery, locking, and batch mode
 ```
 
 ## License

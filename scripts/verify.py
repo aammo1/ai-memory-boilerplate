@@ -5,9 +5,15 @@ import re
 import sys
 from pathlib import Path
 
-REQUIRED_FILES = ["AGENTS.md", "PROFILE.md", "TODO.md", "PIPELINE.md"]
+REQUIRED_FILES = [
+    "AGENTS.md",
+    "PROFILE.md",
+    "TODO.md",
+    "LAUNCH-PIPELINE.md",
+    "tools/kie_generate.py",
+]
 SECRET_PATTERN = re.compile(
-    r"(?:\bsk-[A-Za-z0-9_-]{20,}|(?:API_KEY|SECRET_KEY|ACCESS_TOKEN|CATALOG_KEY)\s*=\s*[\"']?[A-Za-z0-9_-]{16,})"
+    r"(?:\bsk-[A-Za-z0-9_-]{20,}|(?:KIE_API_KEY|DEEPSEEK_API_KEY|API_KEY|SECRET_KEY|ACCESS_TOKEN|CATALOG_KEY)\s*=\s*[\"']?[A-Za-z0-9_-]{16,})"
 )
 
 
@@ -26,6 +32,9 @@ def main() -> int:
         if not (memory_dir / req).is_file():
             failures.append(f"Missing required file: {req}")
 
+    if not (memory_dir / "03 - Reference Heroes").is_dir():
+        failures.append("Missing required directory: 03 - Reference Heroes/")
+
     md_files = list(memory_dir.rglob("*.md"))
     for path in md_files:
         text = path.read_text(encoding="utf-8", errors="ignore")
@@ -36,7 +45,7 @@ def main() -> int:
         print(f"FAIL: {fail}")
 
     status = "FAIL" if failures else "PASS"
-    print(f"{status} memory health check ({len(md_files)} markdown files checked in {memory_dir})")
+    print(f"{status} memory health check ({len(md_files)} markdown files + tools verified in {memory_dir})")
     return 1 if failures else 0
 
 

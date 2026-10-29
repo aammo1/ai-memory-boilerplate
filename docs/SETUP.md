@@ -2,7 +2,7 @@
 
 Complete setup on a **new computer, for a new user, with a new store**. The example store slug is **`glow-skin`**; replace it with your own.
 
-**Who this is for:** Moroccan cash-on-delivery (COD) sellers who are comfortable running a few terminal commands. The store uses MAD prices, Moroccan `+212` phone numbers, Ozon Express (or a mock courier), a French CRM and a `fr` or `ar` storefront.
+**Who this is for:** Moroccan cash-on-delivery (COD) sellers who are comfortable running a few terminal commands. The store uses MAD prices, Moroccan `+212` phone numbers, Ozon Express or Sendit (chosen in the store wizard), or `mock`, a French CRM and a `fr` or `ar` storefront.
 
 ---
 

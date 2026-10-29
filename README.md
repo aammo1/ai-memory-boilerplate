@@ -54,7 +54,7 @@ your-memory-vault/
 > 📘 **New here? Follow the complete step-by-step guide: [`docs/SETUP.md`](docs/SETUP.md)** (prerequisites, first login, Obsidian, backups, Coolify deploy, local vs. live catalog, updates and troubleshooting).
 
 ### Scope & Prerequisites
-- **Target Market:** Purpose-built for **Moroccan Cash-on-Delivery (COD)** e-commerce (`+212` mobile validation, integer `MAD`, `fr`/`ar` RTL storefront + French CRM back-office, Ozon Express Morocco or `mock` courier via [`store-crm-boilerplate`](https://github.com/aammo1/store-crm-boilerplate)).
+- **Target Market:** Purpose-built for **Moroccan Cash-on-Delivery (COD)** e-commerce (`+212` mobile validation, integer `MAD`, `fr`/`ar` RTL storefront + French CRM back-office, Ozon Express or Sendit (chosen in the store wizard), or `mock` via [`store-crm-boilerplate`](https://github.com/aammo1/store-crm-boilerplate)).
 - **OS & Runtime:** **Linux, macOS, or Windows WSL2** (`kie_generate.py` uses Unix `fcntl.flock`), **Python 3.11+**, **Astral `uv`** (`curl -LsSf https://astral.sh/uv/install.sh | sh`), **Node.js 22+**, and **Git**.
 - **Obsidian (`>= 1.10.2`):** On first vault open, click *Settings → Community plugins → Turn on community plugins* so the pre-bundled **GoodBases** (`notion-table`) plugin renders `02 Bases/*.base`.
 - **Optional Paid / External Integrations:**
